@@ -1,0 +1,5 @@
+{
+  "name": "Vitamancer — Level Up Your Life",
+  "description": "A gamified habit-tracker and life RPG. Build real-life habits to earn XP, level up your character, and battle your bad habits. This app uses the Gemini API to generate personalized habit suggestions.",
+  "requestFramePermissions": []
+}
