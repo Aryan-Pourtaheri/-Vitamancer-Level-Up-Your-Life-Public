@@ -3,7 +3,7 @@ import { Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
-import { PlayerProfile, Habit } from './types';
+import { PlayerProfile, Habit, AvatarOptions } from './types';
 import { xpForLevel, createInitialPlayerProfile } from './constants';
 import LevelUpModal from './components/LevelUpModal';
 import Auth from './components/Auth';
@@ -222,16 +222,16 @@ const ThemedApp: React.FC = () => {
     setHabits([]);
   };
 
-  const handleCreateProfile = async (name: string, characterClass: string, avatarSeed: string) => {
+  const handleCreateProfile = async (name: string, characterClass: string, avatarOptions: AvatarOptions) => {
     if (isOffline) {
-      const newProfile = createInitialPlayerProfile('offline-user', characterClass, name, avatarSeed);
+      const newProfile = createInitialPlayerProfile('offline-user', characterClass, name, avatarOptions);
       setProfile(newProfile as PlayerProfile);
       setCreatorModalOpen(false);
       return;
     }
 
     if (!session?.user) return;
-    const newProfile = createInitialPlayerProfile(session.user.id, characterClass, name, avatarSeed);
+    const newProfile = createInitialPlayerProfile(session.user.id, characterClass, name, avatarOptions);
     
     const { data, error } = await supabase.from('profiles').insert(newProfile).select().single();
     
@@ -244,11 +244,11 @@ const ThemedApp: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="w-screen h-screen flex items-center justify-center bg-background text-foreground">Loading...</div>;
+    return <div className="w-screen h-screen flex items-center justify-center bg-background text-foreground font-mono">Loading...</div>;
   }
 
   return (
-    <div className="bg-background min-h-screen text-foreground antialiased">
+    <div className="bg-background min-h-screen text-foreground">
       {isOffline && (
         <div className="bg-yellow-500/20 text-yellow-300 text-center p-2 text-sm border-b border-yellow-500/30 fixed top-0 w-full z-50">
           You are in offline mode. Your progress will not be saved.

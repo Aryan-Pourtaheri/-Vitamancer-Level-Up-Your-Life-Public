@@ -1,8 +1,17 @@
+
 export interface Stats {
   str: number;
   int: number;
   def: number;
   spd: number;
+}
+
+export interface AvatarOptions {
+  seed: string;
+  eyes: string;
+  mouth: string;
+  hair: string;
+  backgroundColor: string;
 }
 
 export interface PlayerProfile {
@@ -16,7 +25,7 @@ export interface PlayerProfile {
   maxMp: number;
   gold: number;
   characterClass: string;
-  avatar_seed: string;
+  avatar_options: AvatarOptions;
   stats: Stats;
   inventory: Item[];
   created_at?: string;
@@ -41,4 +50,5 @@ export interface CharacterClass {
   name: string;
   description: string;
   spriteUrl: string;
+  stats: Stats;
 }

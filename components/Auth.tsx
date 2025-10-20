@@ -71,7 +71,6 @@ const Auth: React.FC<AuthProps> = ({ isOpen, onClose }) => {
 
 
   return (
-    // FIX: The Modal component requires the content to be passed as children. ModalContent and its descendants are now correctly nested within the Modal component.
     <Modal open={isOpen} onOpenChange={onClose}>
       <ModalContent>
         <ModalHeader>

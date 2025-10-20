@@ -25,6 +25,11 @@
             },
           },
           extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              display: ['"Press Start 2P"', 'cursive'],
+              mono: ['"Silkscreen"', 'monospace'],
+            },
             colors: {
               border: "hsl(var(--border))",
               input: "hsl(var(--input))",
@@ -71,53 +76,53 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
     <style>
       /* Light theme (default) */
       :root {
-        --background: 210 40% 98%;
-        --foreground: 250 25% 10%;
+        --background: 40 30% 96%;
+        --foreground: 20 15% 20%;
         --card: 0 0% 100%;
-        --card-foreground: 250 25% 10%;
+        --card-foreground: 20 15% 20%;
         --popover: 0 0% 100%;
-        --popover-foreground: 250 25% 10%;
-        --primary: 262 80% 55%;
+        --popover-foreground: 20 15% 20%;
+        --primary: 221 83% 53%;
         --primary-foreground: 210 40% 98%;
-        --secondary: 210 30% 95%;
-        --secondary-foreground: 250 25% 15%;
-        --muted: 210 30% 95%;
-        --muted-foreground: 250 10% 45%;
-        --accent: 210 30% 90%;
-        --accent-foreground: 250 25% 10%;
-        --destructive: 0 72% 51%;
+        --secondary: 220 15% 95%;
+        --secondary-foreground: 220 10% 30%;
+        --muted: 220 15% 95%;
+        --muted-foreground: 220 10% 45%;
+        --accent: 220 15% 90%;
+        --accent-foreground: 220 10% 10%;
+        --destructive: 0 84% 60%;
         --destructive-foreground: 210 40% 98%;
-        --border: 210 20% 88%;
-        --input: 210 20% 88%;
-        --ring: 262 80% 60%;
-        --radius: 0.5rem;
+        --border: 220 10% 80%;
+        --input: 220 10% 88%;
+        --ring: 221 83% 53%;
+        --radius: 0.3rem;
       }
       
       /* Dark theme */
       html.dark {
-        --background: 250 25% 6%;
+        --background: 222 47% 11%;
         --foreground: 210 40% 98%;
-        --card: 250 25% 12%;
+        --card: 222 47% 15%;
         --card-foreground: 210 40% 98%;
-        --popover: 250 25% 6%;
+        --popover: 222 47% 11%;
         --popover-foreground: 210 40% 98%;
-        --primary: 262 88% 66%;
-        --primary-foreground: 210 40% 98%;
-        --secondary: 250 15% 20%;
+        --primary: 198 93% 60%;
+        --primary-foreground: 222 47% 11%;
+        --secondary: 217 33% 20%;
         --secondary-foreground: 210 40% 98%;
-        --muted: 250 15% 20%;
-        --muted-foreground: 250 10% 65%;
-        --accent: 262 88% 72%;
-        --accent-foreground: 210 40% 98%;
-        --destructive: 0 84% 60%;
+        --muted: 217 33% 20%;
+        --muted-foreground: 215 20% 65%;
+        --accent: 198 93% 70%;
+        --accent-foreground: 222 47% 11%;
+        --destructive: 0 63% 31%;
         --destructive-foreground: 210 40% 98%;
-        --border: 250 15% 25%;
-        --input: 250 15% 25%;
-        --ring: 262 88% 75%;
+        --border: 217 33% 25%;
+        --input: 217 33% 25%;
+        --ring: 198 93% 60%;
       }
 
       body {
@@ -125,6 +130,17 @@
         background-color: hsl(var(--background));
         color: hsl(var(--foreground));
         transition: background-color 0.3s, color 0.3s;
+      }
+      
+      img, .pixelated {
+        image-rendering: pixelated;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: crisp-edges;
+      }
+
+      .font-display, .font-mono {
+        font-smooth: never;
+        -webkit-font-smoothing: none;
       }
     </style>
   <script type="importmap">

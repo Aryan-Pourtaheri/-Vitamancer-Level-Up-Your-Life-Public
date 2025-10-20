@@ -2,8 +2,14 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/utils';
 
-// FIX: Changed onOpenChange to not expect a boolean, as it's only used for closing.
-const Modal = ({ open, onOpenChange, children }: { open: boolean, onOpenChange: () => void, children: React.ReactNode }) => (
+// FIX: Using a named interface for props to resolve issues with JSX children type inference.
+interface ModalProps {
+  open: boolean;
+  onOpenChange: () => void;
+  children: React.ReactNode;
+}
+
+const Modal = ({ open, onOpenChange, children }: ModalProps) => (
     <AnimatePresence>
         {open && (
             <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -12,7 +18,7 @@ const Modal = ({ open, onOpenChange, children }: { open: boolean, onOpenChange: 
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={() => onOpenChange()}
-                    className="absolute inset-0 bg-black/80"
+                    className="absolute inset-0 bg-black/80 backdrop-blur-sm"
                 />
                 {children}
             </div>
@@ -27,7 +33,7 @@ const ModalContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLD
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.2 }}
-        className={cn("relative z-50 grid w-full max-w-lg gap-4 border bg-card p-6 shadow-lg rounded-lg", className)}
+        className={cn("relative z-50 grid w-full max-w-lg gap-4 border-4 border-border bg-card p-6 rounded-lg", className)}
         {...props}
     >
         {children}

@@ -34,28 +34,31 @@ const itemVariants = {
 };
 
 const IconWrapper: React.FC<{ children: React.ReactNode, className?: string }> = ({ children, className }) => (
-    <div className={`w-16 h-16 mb-6 inline-flex items-center justify-center rounded-full bg-primary/10 text-primary ${className}`}>
+    <div className={`w-16 h-16 mb-6 inline-flex items-center justify-center rounded-lg bg-primary/10 text-primary p-2 ${className}`}>
         {children}
     </div>
 );
 
 const SwordsIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="m15.2 3-6.4 6.4" /><path d="m21.2 8.8-6.4 6.4" /><path d="m3 14.2 6.4 6.4" /><path d="m8.8 2.8 6.4 6.4" />
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props} className="pixelated w-12 h-12">
+        <path d="M6 3h3v1h1v1h1v1h1v1h1v1h1v1h1v1h1v1h1v3h-1v-1h-1v-1h-1v-1h-1v-1h-1v-1h-1V9h-1V8h-1V7h-1V6h-1V3z"/>
+        <path d="M15 3h3v1h-1v1h-1v1h-1v1h-1v1h-1v1h1v1h1v1h1v1h1v3h-3v-1h1v-1h1v-1h1v-1h1v-1h1V9h-1V8h-1V7h-1V6h-1V3z"/>
+        <path d="M9 12v9h1v-1h1v-1h1v-1h1v-1h-1v1h-1v1h-1v1H9v-5h1v1h1v1h1v1h1v1h1v1h1v1h1v-1h-1v-1h-1v-1h-1v-1h-1V12H9z"/>
     </svg>
 );
 
 const BrainCircuitIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 5a3 3 0 1 0-5.993.119A3.5 3.5 0 0 0 8.5 12.5a3 3 0 1 0 5.495 2.025A3.5 3.5 0 0 0 12.5 8.5a3 3 0 0 0-2.5-4.33A3.5 3.5 0 0 0 12 5Z" /><path d="M4.5 15.5A3.5 3.5 0 0 0 8 19c1.933 0 3.5-1.567 3.5-3.5A3.5 3.5 0 0 0 8 12" /><path d="M19.5 15.5A3.5 3.5 0 0 1 16 19c-1.933 0-3.5-1.567-3.5-3.5A3.5 3.5 0 0 1 16 12" /><path d="M12 19a3 3 0 1 0-1.5-5.657" /><path d="M12 5a3 3 0 1 1 1.5 5.657" />
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props} className="pixelated w-12 h-12">
+        <path d="M8 4h8v1h1v1h1v2h-1v1h-1v1h-2v-1H9v1H7v-1H6V7H5V6h1V5h2V4z m1 2h6v1h1v1h-1v1H8V8h1V7H8V6z M7 11h1v1h1v1h-1v1h2v1h1v1h2v-1h1v-1h2v-1h-1v-1h1v-1h1v2h-1v1h-1v1h1v1h-1v1h-2v1h-1v1H9v-1H8v-1H6v-1h1v-1h-1v-1h1v-1h-1v-1h1v-2z"/>
     </svg>
 );
 
 const ShieldCheckIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /><path d="m9 12 2 2 4-4" />
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props} className="pixelated w-12 h-12">
+        <path d="M5 3h14v1h1v1h1v7h-1v1h-1v1h-1v1h-1v2h-2v1h-1v1h-2v-1h-1v-1h-2v-1h-1V5h1V4h1V3z m1 2v7h1v1h1v1h1v1h1v1h2v-1h1v-1h1v-1h1v-1h1V5H6z m4 6h1v1h2v-1h1v1h1v1h-1v1h-1v-1h-2v1h-1v-1h-1v-1h1v-1z"/>
     </svg>
 );
+
 
 const FaqItem: React.FC<{ q: string; a: string }> = ({ q, a }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -95,17 +98,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
       >
         {/* HERO SECTION */}
         <header className="text-center py-28 sm:py-40">
-          <motion.h1 variants={itemVariants} className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tighter">
+          <motion.h1 variants={itemVariants} className="text-4xl sm:text-6xl md:text-7xl font-display tracking-widest leading-loose">
             VITAMANCER
           </motion.h1>
-          <motion.h2 variants={itemVariants} className="text-2xl sm:text-3xl mt-4 text-muted-foreground font-medium">
+          <motion.h2 variants={itemVariants} className="text-xl sm:text-2xl mt-4 text-muted-foreground font-mono">
             Level Up Your Life, One Habit at a Time.
           </motion.h2>
           <motion.p variants={itemVariants} className="mt-8 max-w-2xl mx-auto text-lg text-foreground/80">
             Stop grinding, start playing. Vitamancer is a life RPG that turns your daily goals into epic quests. Build habits, earn XP, and become the hero of your own story.
           </motion.p>
           <motion.div variants={itemVariants} className="mt-12">
-            <Button onClick={onGetStarted} size="lg" className="text-lg px-10 py-7 font-bold transform hover:scale-105 transition-transform">
+            <Button onClick={onGetStarted} size="lg" className="transform hover:scale-105 transition-transform">
               Start Your Adventure
             </Button>
           </motion.div>
@@ -114,28 +117,28 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
         {/* FEATURES OVERVIEW */}
         <motion.section variants={itemVariants} className="py-20">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h3 className="text-4xl font-bold">Your Life, Gamified.</h3>
+            <h3 className="text-3xl font-mono font-bold">Your Life, Gamified.</h3>
             <p className="text-muted-foreground mt-4 text-lg">Vitamancer transforms self-improvement into a captivating RPG experience. Here’s how you’ll conquer your goals.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8 text-center">
-            <Card className="bg-secondary/30 border-border/50">
+            <Card className="bg-secondary/30">
               <CardHeader>
-                  <IconWrapper><SwordsIcon className="w-8 h-8" /></IconWrapper>
-                  <CardTitle className="text-2xl">Forge Your Hero</CardTitle>
+                  <IconWrapper><SwordsIcon/></IconWrapper>
+                  <CardTitle className="text-2xl font-mono">Forge Your Hero</CardTitle>
               </CardHeader>
               <CardContent><p className="text-muted-foreground">Design a unique pixel-art avatar that grows stronger as you do.</p></CardContent>
             </Card>
-            <Card className="bg-secondary/30 border-border/50">
+            <Card className="bg-secondary/30">
               <CardHeader>
-                  <IconWrapper><ShieldCheckIcon className="w-8 h-8" /></IconWrapper>
-                  <CardTitle className="text-2xl">Conquer Quests</CardTitle>
+                  <IconWrapper><ShieldCheckIcon/></IconWrapper>
+                  <CardTitle className="text-2xl font-mono">Conquer Quests</CardTitle>
               </CardHeader>
               <CardContent><p className="text-muted-foreground">Turn habits into daily quests. Earn XP for every task you complete.</p></CardContent>
             </Card>
-            <Card className="bg-secondary/30 border-border/50">
+            <Card className="bg-secondary/30">
                <CardHeader>
-                   <IconWrapper><BrainCircuitIcon className="w-8 h-8" /></IconWrapper>
-                   <CardTitle className="text-2xl">Unlock Potential</CardTitle>
+                   <IconWrapper><BrainCircuitIcon/></IconWrapper>
+                   <CardTitle className="text-2xl font-mono">Unlock Potential</CardTitle>
               </CardHeader>
               <CardContent><p className="text-muted-foreground">Level up, boost your stats, and become the master of your own life.</p></CardContent>
             </Card>
@@ -146,15 +149,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={containerVariants} className="py-24">
           <div className="flex flex-col md:flex-row items-center gap-12">
             <motion.div variants={itemVariants} className="md:w-1/2 text-center md:text-left">
-                <h2 className="text-4xl font-bold tracking-tight mb-4">Forge Your Digital Self</h2>
+                <h2 className="text-3xl font-mono font-bold tracking-tight mb-4">Forge Your Digital Self</h2>
                 <p className="text-lg text-muted-foreground">Your journey begins with a hero. Create a unique pixel-art avatar that truly represents you. Choose a class, customize your look, and watch your character evolve from a Level 1 novice to a legendary champion as you conquer your real-life goals.</p>
             </motion.div>
             <motion.div variants={itemVariants} className="md:w-1/2">
                 <div className="grid grid-cols-3 gap-4">
                     {CHARACTER_CLASSES.slice(0, 6).map((charClass, i) => (
-                        <div key={i} className="p-2 bg-secondary rounded-lg border border-border/50 aspect-square flex flex-col items-center justify-center">
-                            <img src={charClass.spriteUrl} alt={charClass.name} className="w-16 h-16 bg-background rounded-md" />
-                            <p className="text-sm font-semibold mt-2">{charClass.name}</p>
+                        <div key={i} className="p-2 bg-secondary rounded-lg border-2 border-border aspect-square flex flex-col items-center justify-center">
+                            <img src={charClass.spriteUrl} alt={charClass.name} className="w-16 h-20 bg-background/50 rounded-md object-contain scale-125 origin-top" />
+                            <p className="text-sm font-mono mt-2">{charClass.name}</p>
                         </div>
                     ))}
                 </div>
@@ -166,22 +169,22 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={containerVariants} className="py-24">
             <div className="flex flex-col md:flex-row-reverse items-center gap-12">
                 <motion.div variants={itemVariants} className="md:w-1/2 text-center md:text-left">
-                    <h2 className="text-4xl font-bold tracking-tight mb-4">Turn Chores into Epic Quests</h2>
+                    <h2 className="text-3xl font-mono font-bold tracking-tight mb-4">Turn Chores into Epic Quests</h2>
                     <p className="text-lg text-muted-foreground">"Go to the gym" is boring. "Train at the Iron Temple to boost your STR" is an adventure. Vitamancer reframes your to-do list into a quest log. Earn Experience Points (XP), collect gold, and discover powerful items for every habit you build and every task you complete.</p>
                 </motion.div>
                 <motion.div variants={itemVariants} className="md:w-1/2">
                     <Card className="bg-card/80 backdrop-blur-sm p-4">
-                        <CardHeader className="p-2"><CardTitle className="text-xl">Daily Quests</CardTitle></CardHeader>
+                        <CardHeader className="p-2"><CardTitle className="text-xl font-mono">Daily Quests</CardTitle></CardHeader>
                         <CardContent className="p-2 space-y-3">
                             <div className="flex items-center p-3 bg-secondary rounded-lg border-l-4 border-l-green-500">
                                 <input type="checkbox" className="w-5 h-5 mr-4 accent-green-500" readOnly />
                                 <span>Meditate for 10 minutes</span>
-                                <span className="ml-auto font-bold text-green-400 text-sm">+10 XP</span>
+                                <span className="ml-auto font-bold text-green-400 text-sm font-mono">+10 XP</span>
                             </div>
                             <div className="flex items-center p-3 bg-secondary rounded-lg border-l-4 border-l-yellow-500">
                                 <input type="checkbox" className="w-5 h-5 mr-4 accent-green-500" readOnly />
                                 <span>Read one chapter of a book</span>
-                                <span className="ml-auto font-bold text-yellow-400 text-sm">+25 XP</span>
+                                <span className="ml-auto font-bold text-yellow-400 text-sm font-mono">+25 XP</span>
                             </div>
                             <div className="flex items-center p-3 bg-secondary rounded-lg border-l-4 border-l-red-500 opacity-50">
                                 <input type="checkbox" checked className="w-5 h-5 mr-4 accent-green-500" readOnly />
@@ -196,15 +199,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
         {/* AI QUEST GENERATION */}
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={containerVariants} className="py-24 text-center">
             <motion.div variants={itemVariants}>
-                <h2 className="text-4xl font-bold tracking-tight mb-4">Your Personal Quest Master</h2>
+                <h2 className="text-3xl font-mono font-bold tracking-tight mb-4">Your Personal Quest Master</h2>
                 <p className="text-lg text-muted-foreground max-w-3xl mx-auto">Feeling lost on your journey? The Vitamancer AI, powered by the Gemini API, is your personal guide. Tell it your grand ambition—like "get fit" or "learn to code"—and it will forge a custom set of actionable quests, tailored to your goal and broken down by difficulty.</p>
             </motion.div>
             <motion.div variants={itemVariants} className="mt-12 max-w-2xl mx-auto">
                  <Card className="bg-card/80 backdrop-blur-sm p-6 text-left">
                     <p className="text-sm text-muted-foreground mb-4">Tell the Vitamancer AI your goal...</p>
                     <div className="flex gap-2">
-                        <input type="text" value="Learn a new skill" readOnly className="flex-grow h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                        <Button>Generate Quests</Button>
+                        <input type="text" value="Learn a new skill" readOnly className="flex-grow h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                        <Button>Generate</Button>
                     </div>
                 </Card>
             </motion.div>
@@ -213,20 +216,20 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
         {/* TESTIMONIALS */}
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={containerVariants} className="py-24">
             <motion.div variants={itemVariants} className="text-center max-w-3xl mx-auto mb-16">
-                <h3 className="text-4xl font-bold">Hear From Fellow Adventurers</h3>
+                <h3 className="text-3xl font-mono font-bold">Hear From Fellow Adventurers</h3>
                 <p className="text-muted-foreground mt-4 text-lg">Thousands have started their epic journey of self-improvement. See what they have to say.</p>
             </motion.div>
             <div className="grid md:grid-cols-3 gap-8">
                 <motion.div variants={itemVariants}>
-                    <Card className="h-full bg-secondary/30 border-border/50 flex flex-col">
+                    <Card className="h-full bg-secondary/30 flex flex-col">
                       <CardContent className="p-6 flex-grow">
                           <blockquote className="italic text-foreground/90">"I've tried every productivity app out there, but nothing stuck. Thinking of my tasks as 'quests' was a game-changer for my motivation. I'm finally consistent!"</blockquote>
                       </CardContent>
                       <CardHeader className="pt-0">
                           <div className="flex items-center gap-3">
-                              <img src="https://api.dicebear.com/8.x/pixel-art/svg?seed=alex" alt="Alex's avatar" className="w-12 h-12 bg-background rounded-md" />
+                              <img src="https://api.dicebear.com/8.x/adventurer/svg?seed=alex&backgroundColor=b6e3f4" alt="Alex's avatar" className="w-16 h-20 bg-background/50 rounded-md object-contain scale-125 origin-top" />
                               <div>
-                                  <p className="font-semibold">Alex M.</p>
+                                  <p className="font-semibold font-mono">Alex M.</p>
                                   <p className="text-sm text-muted-foreground">Level 12 Mage</p>
                               </div>
                           </div>
@@ -234,15 +237,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                     </Card>
                 </motion.div>
                 <motion.div variants={itemVariants}>
-                    <Card className="h-full bg-secondary/30 border-border/50 flex flex-col">
+                    <Card className="h-full bg-secondary/30 flex flex-col">
                       <CardContent className="p-6 flex-grow">
                           <blockquote className="italic text-foreground/90">"As a student, it's easy to feel overwhelmed. Vitamancer helps me break down huge study goals into manageable daily quests. The AI suggestions are surprisingly helpful."</blockquote>
                       </CardContent>
                       <CardHeader className="pt-0">
                           <div className="flex items-center gap-3">
-                              <img src="https://api.dicebear.com/8.x/pixel-art/svg?seed=sara" alt="Sara's avatar" className="w-12 h-12 bg-background rounded-md" />
+                               <img src="https://api.dicebear.com/8.x/adventurer/svg?seed=sara&backgroundColor=c0aede" alt="Sara's avatar" className="w-16 h-20 bg-background/50 rounded-md object-contain scale-125 origin-top" />
                               <div>
-                                  <p className="font-semibold">Sara K.</p>
+                                  <p className="font-semibold font-mono">Sara K.</p>
                                   <p className="text-sm text-muted-foreground">Level 9 Rogue</p>
                               </div>
                           </div>
@@ -250,15 +253,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                     </Card>
                 </motion.div>
                 <motion.div variants={itemVariants}>
-                    <Card className="h-full bg-secondary/30 border-border/50 flex flex-col">
+                    <Card className="h-full bg-secondary/30 flex flex-col">
                       <CardContent className="p-6 flex-grow">
                           <blockquote className="italic text-foreground/90">"It's just... fun! Seeing my character level up alongside my real-life progress is incredibly rewarding. I hit a new deadlift PR and my STR stat increased. How cool is that?"</blockquote>
                       </CardContent>
                        <CardHeader className="pt-0">
                           <div className="flex items-center gap-3">
-                              <img src="https://api.dicebear.com/8.x/pixel-art/svg?seed=dave" alt="Dave's avatar" className="w-12 h-12 bg-background rounded-md" />
+                               <img src="https://api.dicebear.com/8.x/adventurer/svg?seed=dave&backgroundColor=ffd5dc" alt="Dave's avatar" className="w-16 h-20 bg-background/50 rounded-md object-contain scale-125 origin-top" />
                               <div>
-                                  <p className="font-semibold">Dave R.</p>
+                                  <p className="font-semibold font-mono">Dave R.</p>
                                   <p className="text-sm text-muted-foreground">Level 15 Warrior</p>
                               </div>
                           </div>
@@ -271,7 +274,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
         {/* FAQ */}
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={containerVariants} className="py-24">
             <motion.div variants={itemVariants} className="text-center max-w-3xl mx-auto mb-12">
-                <h3 className="text-4xl font-bold">Your Questions, Answered</h3>
+                <h3 className="text-3xl font-mono font-bold">Your Questions, Answered</h3>
             </motion.div>
             <motion.div variants={itemVariants} className="max-w-3xl mx-auto">
                 <FaqItem q="Is Vitamancer free to use?" a="Yes! The core features of Vitamancer—creating your character, tracking habits as quests, and leveling up—are completely free. We may introduce optional cosmetic items or advanced features in the future." />
@@ -283,12 +286,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
 
         {/* FINAL CTA */}
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={itemVariants} className="text-center py-28">
-          <h2 className="text-4xl sm:text-5xl font-bold tracking-tight">Ready to Begin Your Epic Journey?</h2>
+          <h2 className="text-3xl sm:text-4xl font-mono font-bold tracking-tight">Ready to Begin Your Epic Journey?</h2>
           <p className="mt-6 max-w-xl mx-auto text-lg text-muted-foreground">
             Your adventure awaits. Sign up for free, create your hero, and start turning your ambitions into achievements.
           </p>
           <div className="mt-10">
-            <Button onClick={onGetStarted} size="lg" className="text-lg px-10 py-7 font-bold transform hover:scale-105 transition-transform">
+            <Button onClick={onGetStarted} size="lg" className="transform hover:scale-105 transition-transform">
               Start Leveling Up
             </Button>
           </div>

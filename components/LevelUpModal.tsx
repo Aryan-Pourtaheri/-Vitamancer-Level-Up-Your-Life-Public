@@ -10,11 +10,10 @@ interface LevelUpModalProps {
 
 const LevelUpModal: React.FC<LevelUpModalProps> = ({ level, onClose }) => {
   return (
-    // FIX: The Modal component requires the content to be passed as children. ModalContent and its descendants are now correctly nested within the Modal component.
     <Modal open={true} onOpenChange={onClose}>
       <ModalContent>
         <ModalHeader>
-          <ModalTitle className="text-center text-4xl font-black text-yellow-300">LEVEL UP!</ModalTitle>
+          <ModalTitle className="text-center text-4xl font-display text-yellow-300">LEVEL UP!</ModalTitle>
         </ModalHeader>
         <motion.div
           initial={{ scale: 0.5, opacity: 0 }}
@@ -23,7 +22,7 @@ const LevelUpModal: React.FC<LevelUpModalProps> = ({ level, onClose }) => {
           className="text-center my-6"
         >
           <p className="text-xl mb-2 text-muted-foreground">You have reached</p>
-          <p className="text-6xl font-bold mb-6 text-green-400">{`Level ${level}`}</p>
+          <p className="text-6xl font-bold mb-6 text-green-400 font-mono">{`Level ${level}`}</p>
           <p className="text-muted-foreground mb-8">Your stats have increased! You feel stronger.</p>
         </motion.div>
         <ModalFooter>

@@ -1,29 +1,53 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { PlayerProfile } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle } from '../Card';
+import { motion } from 'framer-motion';
 
 const StatRow: React.FC<{ label: string; value: string | number }> = ({ label, value }) => (
   <div className="flex justify-between items-center py-1.5 text-sm border-b border-white/5 last:border-b-0">
     <span className="text-muted-foreground">{label}</span>
-    <span className="font-semibold">{value}</span>
+    <span className="font-semibold font-mono">{value}</span>
   </div>
 );
 
 const StatsPanel: React.FC<{ playerProfile: PlayerProfile }> = ({ playerProfile }) => {
-  const avatarUrl = `https://api.dicebear.com/8.x/pixel-art/svg?seed=${playerProfile.avatar_seed}`;
+  const avatarUrl = useMemo(() => {
+    if (!playerProfile.avatar_options) {
+      // Fallback for old data structure if needed
+      return `https://api.dicebear.com/8.x/adventurer/svg?seed=${playerProfile.name}`;
+    }
+    const params = new URLSearchParams({
+      seed: playerProfile.avatar_options.seed,
+      eyes: playerProfile.avatar_options.eyes,
+      mouth: playerProfile.avatar_options.mouth,
+      hair: playerProfile.avatar_options.hair,
+      backgroundColor: playerProfile.avatar_options.backgroundColor,
+    });
+    return `https://api.dicebear.com/8.x/adventurer/svg?${params.toString()}`;
+  }, [playerProfile.avatar_options, playerProfile.name]);
   
   return (
     <Card className="bg-card/80 backdrop-blur-sm sticky top-24">
       <CardHeader className="items-center text-center">
-        <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-border bg-secondary mb-4">
-           <img src={avatarUrl} alt="Player Avatar" className="w-full h-full object-cover"/>
+        <div className="w-32 h-40 rounded-lg overflow-hidden border-2 border-border bg-secondary mb-4">
+           <motion.img 
+            src={avatarUrl} 
+            alt="Player Avatar" 
+            className="w-full h-full object-contain scale-125 origin-top"
+            animate={{ y: [-2, 2, -2] }}
+            transition={{
+              duration: 3,
+              ease: "easeInOut",
+              repeat: Infinity,
+            }}
+           />
         </div>
-        <CardTitle className="text-2xl">{playerProfile.name}</CardTitle>
+        <CardTitle className="text-2xl font-mono">{playerProfile.name}</CardTitle>
       </CardHeader>
       
       <CardContent className="space-y-4">
         <div className="bg-secondary/50 p-3 rounded-lg">
-          <h4 className="font-semibold text-lg text-primary mb-2">Attributes</h4>
+          <h4 className="font-semibold text-lg text-primary mb-2 font-mono">Attributes</h4>
           <StatRow label="Strength" value={playerProfile.stats.str} />
           <StatRow label="Intelligence" value={playerProfile.stats.int} />
           <StatRow label="Defense" value={playerProfile.stats.def} />
@@ -31,7 +55,7 @@ const StatsPanel: React.FC<{ playerProfile: PlayerProfile }> = ({ playerProfile 
         </div>
 
         <div className="bg-secondary/50 p-3 rounded-lg">
-          <h4 className="font-semibold text-lg text-primary mb-2">Inventory</h4>
+          <h4 className="font-semibold text-lg text-primary mb-2 font-mono">Inventory</h4>
           {playerProfile.inventory.length > 0 ? (
               playerProfile.inventory.map(item => (
                   <div key={item.id} className="text-sm text-muted-foreground">{item.name}</div>
