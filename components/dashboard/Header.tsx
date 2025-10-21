@@ -37,7 +37,7 @@ interface HeaderProps {
   onSignOut: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ playerProfile, onSignOut }) => {
+const Header: React.FC<HeaderProps> = React.memo(({ playerProfile, onSignOut }) => {
   const xpToNext = xpForLevel(playerProfile.level);
   const xpCurrentLevel = xpForLevel(playerProfile.level - 1) || 0;
   const currentLevelProgress = playerProfile.xp - xpCurrentLevel;
@@ -71,6 +71,6 @@ const Header: React.FC<HeaderProps> = ({ playerProfile, onSignOut }) => {
       </div>
     </header>
   );
-};
+});
 
 export default Header;

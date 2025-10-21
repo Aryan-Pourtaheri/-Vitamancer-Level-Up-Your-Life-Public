@@ -70,6 +70,15 @@
               md: "calc(var(--radius) - 2px)",
               sm: "calc(var(--radius) - 4px)",
             },
+             keyframes: {
+              breathing: {
+                '0%, 100%': { transform: 'translateY(-2px)' },
+                '50%': { transform: 'translateY(2px)' },
+              },
+            },
+            animation: {
+              breathing: 'breathing 3s ease-in-out infinite',
+            },
           },
         },
       }

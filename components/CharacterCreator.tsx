@@ -1,198 +1,240 @@
-import React, { useState, useMemo } from 'react';
+
+import React, { useState, useMemo, useCallback } from 'react';
 import Button from './PixelButton';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from './Modal';
 import { Input } from './Input';
-import { CHARACTER_CLASSES, AVATAR_OPTIONS } from '../constants';
+import { CHARACTER_CLASSES } from '../constants';
 import { cn } from '../lib/utils';
-import { AvatarOptions, CharacterClass } from '../types';
-import { motion } from 'framer-motion';
+import { AvatarOptions, Stats, CharacterClass } from '../types';
+import PlayerAvatar from './PlayerAvatar';
+
+const DiceIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M16 8h.01"></path><path d="M12 12h.01"></path><path d="M8 16h.01"></path>
+    </svg>
+);
+
+const ResetIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 2v6h6"></path><path d="M21 12A9 9 0 0 0 6 5.3L3 8"></path><path d="M21 22v-6h-6"></path><path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"></path>
+    </svg>
+);
+
 
 interface CharacterCreatorProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreateProfile: (name: string, characterClass: string, avatarOptions: AvatarOptions) => void;
+  onCreateProfile: (name: string, characterClass: string, avatarOptions: AvatarOptions, stats: Stats) => void;
 }
 
-// FIX: Corrected malformed SVG JSX.
-const DiceIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M5 3h14v1h1v1h1v1h1v1h1v1h-1v1h-1v1h-1v1h-1v1H5V5h1V4h1V3z m1 2v10h10V5H6z m1 1h2v2H7V6z m6 0h2v2h-2V6z m-6 6h2v2H7v-2z m6 0h2v2h-2v-2z"/>
-    </svg>
+const MAX_STAT_POINTS = 30;
+const MIN_STAT_VALUE = 1;
+const STAT_NAMES: (keyof Stats)[] = ['str', 'int', 'def', 'spd'];
+
+const DEFAULT_CHARACTER = {
+    name: "",
+    class: CHARACTER_CLASSES[0],
+    avatar: CHARACTER_CLASSES[0].avatar,
+    stats: { str: 7, int: 7, def: 7, spd: 9 }
+};
+
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+
+const TabButton: React.FC<{ active: boolean; onClick: () => void; children: React.ReactNode }> = ({ active, onClick, children }) => (
+    <button onClick={onClick} className={cn('flex-1 p-2 font-mono font-bold text-center border-b-4 transition-colors', active ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground')}>
+        {children}
+    </button>
 );
 
-const ChevronLeft = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-);
-const ChevronRight = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-);
-
-
-const AppearanceControl: React.FC<{
+const StatControl: React.FC<{
     label: string;
-    onCycle: (direction: -1 | 1) => void;
-    children: React.ReactNode;
-}> = ({ label, onCycle, children }) => (
-    <div>
-        <h4 className="text-sm font-bold text-muted-foreground mb-2 font-mono uppercase tracking-widest">{label}</h4>
-        <div className="flex items-center justify-between bg-secondary/50 p-1 rounded-md">
-            <Button variant="ghost" size="icon" onClick={() => onCycle(-1)} className="h-10 w-10"><ChevronLeft className="w-5 h-5" /></Button>
-            <div className="w-12 h-12 flex items-center justify-center">{children}</div>
-            <Button variant="ghost" size="icon" onClick={() => onCycle(1)} className="h-10 w-10"><ChevronRight className="w-5 h-5" /></Button>
+    value: number;
+    onUpdate: (value: number) => void;
+}> = ({ label, value, onUpdate }) => (
+    <div className="grid grid-cols-6 items-center gap-3">
+        <label className="col-span-2 text-sm font-semibold uppercase text-muted-foreground">{label}</label>
+        <div className="col-span-3">
+            <input
+                type="range"
+                min={MIN_STAT_VALUE}
+                max={15} // Set a reasonable max for one stat
+                value={value}
+                onChange={(e) => onUpdate(parseInt(e.target.value, 10))}
+                className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+            />
         </div>
+        <div className="col-span-1 text-right text-lg font-mono font-bold">{value}</div>
     </div>
 );
 
 
 const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, onCreateProfile }) => {
-  const [name, setName] = useState('');
-  const [selectedClass, setSelectedClass] = useState(CHARACTER_CLASSES[0]);
-  const [avatarOptions, setAvatarOptions] = useState<AvatarOptions>({
-    seed: Math.random().toString(36).substring(7),
-    eyes: 'variant01',
-    mouth: 'variant01',
-    hair: 'long01',
-    backgroundColor: 'b6e3f4'
-  });
-  const [loading, setLoading] = useState(false);
-
-  const handleAppearanceCycle = (option: keyof typeof AVATAR_OPTIONS, direction: -1 | 1) => {
-    const optionsArray = AVATAR_OPTIONS[option];
-    const currentValue = avatarOptions[option as keyof AvatarOptions];
-    const currentIndex = optionsArray.indexOf(currentValue as string);
+    const [name, setName] = useState(DEFAULT_CHARACTER.name);
+    const [selectedClass, setSelectedClass] = useState<CharacterClass>(DEFAULT_CHARACTER.class);
+    const [avatarOptions, setAvatarOptions] = useState<AvatarOptions>(DEFAULT_CHARACTER.avatar);
+    const [stats, setStats] = useState<Stats>(DEFAULT_CHARACTER.stats);
     
-    let nextIndex = currentIndex + direction;
-    if (nextIndex < 0) nextIndex = optionsArray.length - 1;
-    if (nextIndex >= optionsArray.length) nextIndex = 0;
+    const [activeTab, setActiveTab] = useState<'appearance' | 'stats'>('appearance');
+    const [loading, setLoading] = useState(false);
+
+    const pointsUsed = useMemo(() => STAT_NAMES.reduce((sum, key) => sum + stats[key], 0), [stats]);
+    const pointsRemaining = MAX_STAT_POINTS - pointsUsed;
+
+    const handleStatUpdate = (stat: keyof Stats, value: number) => {
+        setStats(prev => {
+            const currentTotal = pointsUsed - prev[stat];
+            const newValue = clamp(value, MIN_STAT_VALUE, 15);
+            const newTotal = currentTotal + newValue;
+            if (newTotal > MAX_STAT_POINTS) return prev; // Don't allow update if it exceeds total points
+            return { ...prev, [stat]: newValue };
+        });
+    };
+
+    const randomize = useCallback(() => {
+        const randomClass = CHARACTER_CLASSES[Math.floor(Math.random() * CHARACTER_CLASSES.length)];
+        setSelectedClass(randomClass);
+        
+        const hairStyles: AvatarOptions['hairStyle'][] = ["spiky", "long", "short", "bun", "mohawk"];
+        const eyeStyles: AvatarOptions['eyeStyle'][] = ["normal", "happy", "sleepy", "angry"];
+        const skinTones = ['#f2d3b1', '#e8b3a5', '#d5a38a', '#c09f8e', '#a07662'];
+
+        const randomColor = () => `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`;
+
+        setAvatarOptions({
+            skinColor: skinTones[Math.floor(Math.random() * skinTones.length)],
+            hairColor: randomColor(),
+            hairStyle: hairStyles[Math.floor(Math.random() * hairStyles.length)],
+            outfitColor: randomColor(),
+            accentColor: randomColor(),
+            eyeStyle: eyeStyles[Math.floor(Math.random() * eyeStyles.length)],
+        });
+
+        // Distribute stat points
+        let remainingPoints = MAX_STAT_POINTS - (STAT_NAMES.length * MIN_STAT_VALUE);
+        const newStats: Stats = { str: 1, int: 1, def: 1, spd: 1 };
+        STAT_NAMES.forEach(stat => {
+            const points = Math.round(Math.random() * remainingPoints);
+            newStats[stat] += points;
+            remainingPoints -= points;
+        });
+        // Distribute any leftover points
+        let i = 0;
+        while(remainingPoints > 0) {
+            const stat = STAT_NAMES[i % STAT_NAMES.length];
+            if (newStats[stat] < 15) {
+                newStats[stat]++;
+                remainingPoints--;
+            }
+            i++;
+        }
+        setStats(newStats);
+
+    }, []);
     
-    setAvatarOptions(prev => ({ ...prev, [option]: optionsArray[nextIndex] }));
-  };
+    const reset = useCallback(() => {
+        setName(DEFAULT_CHARACTER.name);
+        setSelectedClass(DEFAULT_CHARACTER.class);
+        setAvatarOptions(DEFAULT_CHARACTER.avatar);
+        setStats(DEFAULT_CHARACTER.stats);
+    }, []);
 
-  const randomizeAvatar = () => {
-    setAvatarOptions({
-      seed: Math.random().toString(36).substring(7),
-      eyes: AVATAR_OPTIONS.eyes[Math.floor(Math.random() * AVATAR_OPTIONS.eyes.length)],
-      mouth: AVATAR_OPTIONS.mouth[Math.floor(Math.random() * AVATAR_OPTIONS.mouth.length)],
-      hair: AVATAR_OPTIONS.hair[Math.floor(Math.random() * AVATAR_OPTIONS.hair.length)],
-      backgroundColor: AVATAR_OPTIONS.backgroundColors[Math.floor(Math.random() * AVATAR_OPTIONS.backgroundColors.length)],
-    });
-  };
-
-  const handleSubmit = async () => {
-    if (!name.trim()) return;
-    setLoading(true);
-    // Use the character name as the final seed for consistency
-    const finalAvatarOptions = { ...avatarOptions, seed: name.trim() };
-    await onCreateProfile(name, selectedClass.name, finalAvatarOptions);
-    setLoading(false);
-  }
-
-  const avatarUrl = useMemo(() => {
-    const params = new URLSearchParams({
-      seed: avatarOptions.seed,
-      eyes: avatarOptions.eyes,
-      mouth: avatarOptions.mouth,
-      hair: avatarOptions.hair,
-      backgroundColor: avatarOptions.backgroundColor,
-    });
-    return `https://api.dicebear.com/8.x/adventurer/svg?${params.toString()}`;
-  }, [avatarOptions]);
-
-  return (
-    <Modal open={isOpen} onOpenChange={onClose}>
-      <ModalContent className="max-w-6xl">
-        <ModalHeader>
-          <ModalTitle className="text-3xl font-mono font-bold">Forge Your Hero</ModalTitle>
-        </ModalHeader>
-        <div className="grid grid-cols-1 md:grid-cols-10 gap-6 py-4">
-          
-          {/* Left Panel: Class Selection */}
-          <div className="md:col-span-2 space-y-2 h-[450px] overflow-y-auto pr-2 bg-secondary/30 p-2 rounded-lg border-2 border-border">
-              <h3 className="font-mono text-lg font-bold text-center sticky top-0 bg-secondary/80 backdrop-blur-sm py-1">CLASSES</h3>
-              {CHARACTER_CLASSES.map(c => (
-                  <button key={c.name} onClick={() => setSelectedClass(c)} className={cn('w-full p-2 text-left border-2 rounded-lg cursor-pointer transition-all flex items-center gap-3', selectedClass.name === c.name ? 'border-primary bg-primary/10' : 'border-transparent hover:border-primary/50 hover:bg-secondary')}>
-                      <img src={c.spriteUrl} alt={c.name} className="w-10 h-12 bg-background/50 rounded-md object-contain scale-125 origin-top flex-shrink-0" />
-                      <span className="text-sm font-semibold font-mono">{c.name}</span>
-                  </button>
-              ))}
-          </div>
-
-          {/* Center Panel: Preview & Info */}
-          <div className="md:col-span-4 flex flex-col items-center justify-between">
-              <div className="w-full space-y-4">
-                 <div className="relative w-48 h-64 mx-auto">
-                    <div className="w-full h-full rounded-lg overflow-hidden border-4 border-border bg-secondary shadow-lg">
-                        <motion.img 
-                            src={avatarUrl} 
-                            alt="Avatar Preview" 
-                            className="w-full h-full object-contain scale-125 origin-top"
-                            key={avatarUrl}
-                            animate={{ y: [-1, 1, -1] }}
-                            transition={{
-                              duration: 3,
-                              ease: "easeInOut",
-                              repeat: Infinity,
-                            }}
-                        />
+    const handleSubmit = async () => {
+        if (!name.trim() || pointsRemaining < 0) return;
+        setLoading(true);
+        await onCreateProfile(name, selectedClass.name, avatarOptions, stats);
+        setLoading(false);
+    }
+    
+    return (
+        <Modal open={isOpen} onOpenChange={onClose}>
+            <ModalContent className="max-w-5xl">
+                <ModalHeader>
+                    <ModalTitle className="text-3xl font-mono font-bold">Forge Your Hero</ModalTitle>
+                </ModalHeader>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4">
+                    {/* Left Panel: Preview & Core Info */}
+                    <div className="flex flex-col items-center justify-between gap-4">
+                        <div className="w-64 h-80 rounded-lg overflow-hidden border-4 border-border bg-secondary shadow-lg">
+                           <PlayerAvatar options={avatarOptions} className="w-full h-full object-contain scale-125 origin-top animate-breathing" />
+                        </div>
+                        <div className="w-full max-w-sm space-y-3">
+                             <Input
+                                id="char-name"
+                                placeholder="Enter your hero's name"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className="text-center text-lg h-12 font-mono"
+                             />
+                             <select value={selectedClass.name} onChange={(e) => setSelectedClass(CHARACTER_CLASSES.find(c => c.name === e.target.value) || CHARACTER_CLASSES[0])} className="w-full h-12 rounded-md border-2 border-input bg-background px-3 font-mono text-lg text-center appearance-none">
+                                {CHARACTER_CLASSES.map(c => <option key={c.name}>{c.name}</option>)}
+                             </select>
+                        </div>
+                        <div className="flex gap-2">
+                            <Button variant="outline" onClick={randomize}><DiceIcon className="w-4 h-4 mr-2" /> Randomize</Button>
+                            <Button variant="ghost" onClick={reset}><ResetIcon className="w-4 h-4 mr-2" /> Reset</Button>
+                        </div>
                     </div>
-                    <Button variant="outline" size="icon" onClick={randomizeAvatar} className="absolute -bottom-3 -right-3 bg-card rounded-full h-10 w-10 shadow-md" aria-label="Randomize Look">
-                        <DiceIcon className="h-6 w-6 text-muted-foreground pixelated" />
-                    </Button>
-                 </div>
-                 <Input
-                    id="char-name"
-                    placeholder="Enter your hero's name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="text-center text-lg h-12 font-mono"
-                 />
-              </div>
 
-              <div className="p-4 bg-secondary/30 rounded-lg text-sm w-full border-2 border-border mt-4">
-                <p className="font-bold text-lg font-mono text-primary">{selectedClass.name}</p>
-                <p className="text-muted-foreground mb-3">{selectedClass.description}</p>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-base">
-                    <div className="flex justify-between"><span>STR:</span> <span>{selectedClass.stats.str}</span></div>
-                    <div className="flex justify-between"><span>INT:</span> <span>{selectedClass.stats.int}</span></div>
-                    <div className="flex justify-between"><span>DEF:</span> <span>{selectedClass.stats.def}</span></div>
-                    <div className="flex justify-between"><span>SPD:</span> <span>{selectedClass.stats.spd}</span></div>
+                    {/* Right Panel: Customization */}
+                    <div className="bg-secondary/30 p-4 rounded-lg border-2 border-border">
+                        <div className="flex mb-4">
+                            <TabButton active={activeTab === 'appearance'} onClick={() => setActiveTab('appearance')}>Appearance</TabButton>
+                            <TabButton active={activeTab === 'stats'} onClick={() => setActiveTab('stats')}>Stats</TabButton>
+                        </div>
+                        {activeTab === 'appearance' && (
+                           <div className="space-y-4">
+                                <AppearanceControl label="Skin" type="color" value={avatarOptions.skinColor} onUpdate={v => setAvatarOptions(p => ({...p, skinColor: v}))} />
+                                <AppearanceControl label="Hair Color" type="color" value={avatarOptions.hairColor} onUpdate={v => setAvatarOptions(p => ({...p, hairColor: v}))} />
+                                <AppearanceControl label="Hair Style" type="select" value={avatarOptions.hairStyle} onUpdate={v => setAvatarOptions(p => ({...p, hairStyle: v as any}))} options={['spiky', 'long', 'short', 'bun', 'mohawk']} />
+                                <AppearanceControl label="Eye Style" type="select" value={avatarOptions.eyeStyle} onUpdate={v => setAvatarOptions(p => ({...p, eyeStyle: v as any}))} options={['normal', 'happy', 'angry', 'sleepy']} />
+                                <AppearanceControl label="Outfit" type="color" value={avatarOptions.outfitColor} onUpdate={v => setAvatarOptions(p => ({...p, outfitColor: v}))} />
+                                <AppearanceControl label="Accent" type="color" value={avatarOptions.accentColor} onUpdate={v => setAvatarOptions(p => ({...p, accentColor: v}))} />
+                           </div>
+                        )}
+                        {activeTab === 'stats' && (
+                           <div className="space-y-4">
+                                <div className="text-center p-2 rounded-lg bg-background border-2 border-border">
+                                    <p className="font-mono text-muted-foreground">Points Remaining</p>
+                                    <p className={cn("text-4xl font-mono font-bold", pointsRemaining < 0 ? 'text-destructive' : 'text-primary')}>{pointsRemaining}</p>
+                                </div>
+                                <div className="space-y-3 pt-2">
+                                    {STAT_NAMES.map(stat => (
+                                        <StatControl key={stat} label={stat} value={stats[stat]} onUpdate={v => handleStatUpdate(stat, v)} />
+                                    ))}
+                                </div>
+                           </div>
+                        )}
+                    </div>
                 </div>
-              </div>
-          </div>
-
-          {/* Right Panel: Appearance */}
-          <div className="md:col-span-4 space-y-4 bg-secondary/30 p-4 rounded-lg border-2 border-border">
-              <h3 className="font-mono text-lg font-bold text-center">APPEARANCE</h3>
-              <AppearanceControl label="Hair" onCycle={(d) => handleAppearanceCycle('hair', d)}>
-                 <img src={`https://api.dicebear.com/8.x/adventurer-neutral/svg?hair=${avatarOptions.hair}&hairColor=8c6f60`} alt={avatarOptions.hair} />
-              </AppearanceControl>
-
-              <AppearanceControl label="Eyes" onCycle={(d) => handleAppearanceCycle('eyes', d)}>
-                 <img src={`https://api.dicebear.com/8.x/adventurer-neutral/svg?eyes=${avatarOptions.eyes}&eyesColor=000000`} alt={avatarOptions.eyes} className="scale-150" />
-              </AppearanceControl>
-              
-              <AppearanceControl label="Mouth" onCycle={(d) => handleAppearanceCycle('mouth', d)}>
-                 <img src={`https://api.dicebear.com/8.x/adventurer-neutral/svg?mouth=${avatarOptions.mouth}&mouthColor=000000`} alt={avatarOptions.mouth} className="scale-150" />
-              </AppearanceControl>
-
-              <div>
-                  <h4 className="text-sm font-bold text-muted-foreground mb-2 font-mono uppercase tracking-widest">Background</h4>
-                  <div className="flex flex-wrap gap-2 justify-center bg-secondary/50 p-2 rounded-md">
-                      {AVATAR_OPTIONS.backgroundColors.map(color => (
-                          <button key={color} onClick={() => setAvatarOptions(p => ({...p, backgroundColor: color}))} className={cn('h-9 w-9 rounded-full border-2 transition-all', avatarOptions.backgroundColor === color ? 'border-primary ring-2 ring-primary ring-offset-2 ring-offset-secondary' : 'border-border')} style={{backgroundColor: color === 'transparent' ? 'hsl(var(--card))' : `#${color}`}}></button>
-                      ))}
-                  </div>
-              </div>
-          </div>
-        </div>
-        <div className="pt-6 border-t-2 border-border mt-4">
-          <Button onClick={handleSubmit} disabled={!name.trim() || loading} className="w-full" size="lg">
-            {loading ? "Creating Hero..." : "Begin Your Journey"}
-          </Button>
-        </div>
-      </ModalContent>
-    </Modal>
-  );
+                <div className="pt-6 border-t-2 border-border mt-4">
+                    <Button onClick={handleSubmit} disabled={!name.trim() || loading || pointsRemaining < 0} className="w-full" size="lg">
+                        {loading ? "Creating Hero..." : "Begin Your Journey"}
+                    </Button>
+                    {pointsRemaining < 0 && <p className="text-destructive text-center mt-2 text-sm">You have allocated too many stat points!</p>}
+                </div>
+            </ModalContent>
+        </Modal>
+    );
 };
+
+const AppearanceControl: React.FC<{
+    label: string,
+    type: 'color' | 'select',
+    value: string,
+    onUpdate: (value: string) => void,
+    options?: string[]
+}> = ({ label, type, value, onUpdate, options = [] }) => (
+    <div className="flex items-center justify-between">
+        <label className="font-semibold text-muted-foreground">{label}</label>
+        {type === 'color' ? (
+            <input type="color" value={value} onChange={e => onUpdate(e.target.value)} className="w-24 h-10 p-1 bg-background border-2 border-input rounded-md" />
+        ) : (
+             <select value={value} onChange={e => onUpdate(e.target.value)} className="w-40 h-10 rounded-md border-2 border-input bg-background px-3 font-mono text-sm">
+                {options.map(o => <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>)}
+            </select>
+        )}
+    </div>
+);
+
 
 export default CharacterCreator;

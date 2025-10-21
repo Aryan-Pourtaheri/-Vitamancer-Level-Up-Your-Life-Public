@@ -1,9 +1,11 @@
+
 import React, { useState } from 'react';
 import Button from './PixelButton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from './Card';
 import { CHARACTER_CLASSES } from '../constants';
 import { ThemeToggleButton } from './ThemeToggleButton';
+import PlayerAvatar from './PlayerAvatar';
 
 
 interface LandingPageProps {
@@ -41,7 +43,7 @@ const IconWrapper: React.FC<{ children: React.ReactNode, className?: string }> =
 
 const SwordsIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props} className="pixelated w-12 h-12">
-        <path d="M6 3h3v1h1v1h1v1h1v1h1v1h1v1h1v1h1v1h1v3h-1v-1h-1v-1h-1v-1h-1v-1h-1v-1h-1V9h-1V8h-1V7h-1V6h-1V3z"/>
+        <path d="M6 3h3v1h1v1h1v1h1v1h1v1h1v1h1v1h1v3h-1v-1h-1v-1h-1v-1h-1v-1h-1v-1h-1V9h-1V8h-1V7h-1V6h-1V3z"/>
         <path d="M15 3h3v1h-1v1h-1v1h-1v1h-1v1h-1v1h1v1h1v1h1v1h1v3h-3v-1h1v-1h1v-1h1v-1h1v-1h1V9h-1V8h-1V7h-1V6h-1V3z"/>
         <path d="M9 12v9h1v-1h1v-1h1v-1h1v-1h-1v1h-1v1h-1v1H9v-5h1v1h1v1h1v1h1v1h1v1h1v1h1v-1h-1v-1h-1v-1h-1v-1h-1V12H9z"/>
     </svg>
@@ -156,7 +158,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                 <div className="grid grid-cols-3 gap-4">
                     {CHARACTER_CLASSES.slice(0, 6).map((charClass, i) => (
                         <div key={i} className="p-2 bg-secondary rounded-lg border-2 border-border aspect-square flex flex-col items-center justify-center">
-                            <img src={charClass.spriteUrl} alt={charClass.name} className="w-16 h-20 bg-background/50 rounded-md object-contain scale-125 origin-top" />
+                             <div className="w-16 h-20 bg-background/50 rounded-md flex items-center justify-center overflow-hidden">
+                                <PlayerAvatar options={charClass.avatar} className="w-full h-full scale-[1.75] origin-bottom" />
+                            </div>
                             <p className="text-sm font-mono mt-2">{charClass.name}</p>
                         </div>
                     ))}
@@ -227,7 +231,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                       </CardContent>
                       <CardHeader className="pt-0">
                           <div className="flex items-center gap-3">
-                              <img src="https://api.dicebear.com/8.x/adventurer/svg?seed=alex&backgroundColor=b6e3f4" alt="Alex's avatar" className="w-16 h-20 bg-background/50 rounded-md object-contain scale-125 origin-top" />
+                              <div className="w-16 h-20 bg-background/50 rounded-md flex items-center justify-center overflow-hidden"><PlayerAvatar options={{skinColor: "#e8b3a5", hairColor: "#b0632b", hairStyle: "long", outfitColor: "#4682B4", accentColor: "#FFF8DC", eyeStyle: "happy"}} className="w-full h-full scale-150 origin-bottom"/></div>
                               <div>
                                   <p className="font-semibold font-mono">Alex M.</p>
                                   <p className="text-sm text-muted-foreground">Level 12 Mage</p>
@@ -243,7 +247,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                       </CardContent>
                       <CardHeader className="pt-0">
                           <div className="flex items-center gap-3">
-                               <img src="https://api.dicebear.com/8.x/adventurer/svg?seed=sara&backgroundColor=c0aede" alt="Sara's avatar" className="w-16 h-20 bg-background/50 rounded-md object-contain scale-125 origin-top" />
+                               <div className="w-16 h-20 bg-background/50 rounded-md flex items-center justify-center overflow-hidden"><PlayerAvatar options={{skinColor: "#c09f8e", hairColor: "#2c222b", hairStyle: "short", outfitColor: "#2E8B57", accentColor: "#F0E68C", eyeStyle: "normal"}} className="w-full h-full scale-150 origin-bottom"/></div>
                               <div>
                                   <p className="font-semibold font-mono">Sara K.</p>
                                   <p className="text-sm text-muted-foreground">Level 9 Rogue</p>
@@ -259,7 +263,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                       </CardContent>
                        <CardHeader className="pt-0">
                           <div className="flex items-center gap-3">
-                               <img src="https://api.dicebear.com/8.x/adventurer/svg?seed=dave&backgroundColor=ffd5dc" alt="Dave's avatar" className="w-16 h-20 bg-background/50 rounded-md object-contain scale-125 origin-top" />
+                               <div className="w-16 h-20 bg-background/50 rounded-md flex items-center justify-center overflow-hidden"><PlayerAvatar options={{skinColor: "#d5a38a", hairColor: "#8c6f60", hairStyle: "spiky", outfitColor: "#A52A2A", accentColor: "#D2B48C", eyeStyle: "angry"}} className="w-full h-full scale-150 origin-bottom"/></div>
                               <div>
                                   <p className="font-semibold font-mono">Dave R.</p>
                                   <p className="text-sm text-muted-foreground">Level 15 Warrior</p>

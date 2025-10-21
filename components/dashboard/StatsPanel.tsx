@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+
+import React from 'react';
 import { PlayerProfile } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle } from '../Card';
-import { motion } from 'framer-motion';
+import PlayerAvatar from '../PlayerAvatar';
 
 const StatRow: React.FC<{ label: string; value: string | number }> = ({ label, value }) => (
   <div className="flex justify-between items-center py-1.5 text-sm border-b border-white/5 last:border-b-0">
@@ -10,36 +11,14 @@ const StatRow: React.FC<{ label: string; value: string | number }> = ({ label, v
   </div>
 );
 
-const StatsPanel: React.FC<{ playerProfile: PlayerProfile }> = ({ playerProfile }) => {
-  const avatarUrl = useMemo(() => {
-    if (!playerProfile.avatar_options) {
-      // Fallback for old data structure if needed
-      return `https://api.dicebear.com/8.x/adventurer/svg?seed=${playerProfile.name}`;
-    }
-    const params = new URLSearchParams({
-      seed: playerProfile.avatar_options.seed,
-      eyes: playerProfile.avatar_options.eyes,
-      mouth: playerProfile.avatar_options.mouth,
-      hair: playerProfile.avatar_options.hair,
-      backgroundColor: playerProfile.avatar_options.backgroundColor,
-    });
-    return `https://api.dicebear.com/8.x/adventurer/svg?${params.toString()}`;
-  }, [playerProfile.avatar_options, playerProfile.name]);
-  
+const StatsPanel: React.FC<{ playerProfile: PlayerProfile }> = React.memo(({ playerProfile }) => {
   return (
     <Card className="bg-card/80 backdrop-blur-sm sticky top-24">
       <CardHeader className="items-center text-center">
         <div className="w-32 h-40 rounded-lg overflow-hidden border-2 border-border bg-secondary mb-4">
-           <motion.img 
-            src={avatarUrl} 
-            alt="Player Avatar" 
-            className="w-full h-full object-contain scale-125 origin-top"
-            animate={{ y: [-2, 2, -2] }}
-            transition={{
-              duration: 3,
-              ease: "easeInOut",
-              repeat: Infinity,
-            }}
+           <PlayerAvatar 
+            options={playerProfile.avatar_options} 
+            className="w-full h-full object-contain scale-125 origin-top animate-breathing"
            />
         </div>
         <CardTitle className="text-2xl font-mono">{playerProfile.name}</CardTitle>
@@ -67,6 +46,6 @@ const StatsPanel: React.FC<{ playerProfile: PlayerProfile }> = ({ playerProfile 
       </CardContent>
     </Card>
   );
-};
+});
 
 export default StatsPanel;

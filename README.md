@@ -1,3 +1,4 @@
+
 # Vitamancer — Level Up Your Life
 
 *A life RPG and gamified habit-tracker that turns your daily goals into epic quests. Build habits, earn XP, and become the hero of your own story.*
@@ -6,10 +7,10 @@ Vitamancer is a web application that transforms self-improvement into a captivat
 
 ## Core Features
 
--   **Character Creation & Progression**: Design your own pixel-art avatar, choose a class (Warrior, Mage, Rogue, etc.), and watch them grow stronger as you complete your real-life goals.
+-   **Deep Character Customization**: Forge a unique hero in the Vitamancer Forge. Design your own pixel-art-style avatar from scratch and distribute stat points to create a build that perfectly matches your playstyle.
 -   **Gamified Habit Tracking**: Convert your habits into "Daily Quests." Each completed quest rewards you with XP, helping you level up.
 -   **AI Quest Forge**: Powered by the Google Gemini API, this feature generates personalized, actionable quests based on your larger goals (e.g., "get fit," "learn to code").
--   **Stats & Attributes**: Your character has core RPG stats like Strength (STR), Intelligence (INT), and Defense (DEF) that increase as you level up.
+-   **Point-Buy Stat System**: Your character has core RPG stats (Strength, Intelligence, Defense, Speed) that you allocate yourself. These stats grow as you level up, and can influence gameplay.
 -   **Seamless Offline Mode**: Try the app without any setup! Vitamancer runs in a fully interactive offline demo mode if a database connection isn't configured.
 -   **Modern UI/UX**: A clean, responsive interface built with Tailwind CSS and Framer Motion, complete with beautiful light and dark themes.
 

@@ -7,11 +7,12 @@ export interface Stats {
 }
 
 export interface AvatarOptions {
-  seed: string;
-  eyes: string;
-  mouth: string;
-  hair: string;
-  backgroundColor: string;
+  skinColor: string;
+  hairColor: string;
+  hairStyle: 'spiky' | 'long' | 'short' | 'bun' | 'mohawk';
+  outfitColor: string;
+  accentColor: string;
+  eyeStyle: 'normal' | 'happy' | 'angry' | 'sleepy';
 }
 
 export interface PlayerProfile {
@@ -43,12 +44,12 @@ export interface Habit {
   text: string;
   difficulty: 'easy' | 'medium' | 'hard';
   completed: boolean;
+  notes?: string | null;
   created_at?: string;
 }
 
 export interface CharacterClass {
   name: string;
   description: string;
-  spriteUrl: string;
-  stats: Stats;
+  avatar: AvatarOptions;
 }

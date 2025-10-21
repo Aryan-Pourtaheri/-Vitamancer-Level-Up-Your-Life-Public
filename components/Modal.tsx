@@ -6,7 +6,9 @@ import { cn } from '../lib/utils';
 interface ModalProps {
   open: boolean;
   onOpenChange: () => void;
-  children: React.ReactNode;
+  // FIX: Made children optional to resolve type errors in consuming components.
+  // The compiler was not correctly inferring JSX children.
+  children?: React.ReactNode;
 }
 
 const Modal = ({ open, onOpenChange, children }: ModalProps) => (

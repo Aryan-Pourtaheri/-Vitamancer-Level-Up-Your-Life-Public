@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
-import { PlayerProfile, Habit, AvatarOptions } from './types';
+import { PlayerProfile, Habit, AvatarOptions, Stats } from './types';
 import { xpForLevel, createInitialPlayerProfile } from './constants';
 import LevelUpModal from './components/LevelUpModal';
 import Auth from './components/Auth';
@@ -96,14 +97,15 @@ const ThemedApp: React.FC = () => {
     let newLevel = profile.level;
     let xpToNextLevel = xpForLevel(newLevel);
     let didLevelUp = false;
-    let statGains = { maxHp: 0, maxMp: 0, str: 0, int: 0, def: 0 };
+    let statGains = { maxHp: 0, maxMp: 0, str: 0, int: 0, def: 0, spd: 0 };
 
     while (newXp >= xpToNextLevel) {
       statGains.maxHp += 10;
       statGains.maxMp += 5;
-      statGains.str += 2;
-      statGains.int += 2;
+      statGains.str += 1;
+      statGains.int += 1;
       statGains.def += 1;
+      statGains.spd += 1;
       newLevel++;
       xpToNextLevel = xpForLevel(newLevel);
       didLevelUp = true;
@@ -122,6 +124,7 @@ const ThemedApp: React.FC = () => {
         str: profile.stats.str + statGains.str,
         int: profile.stats.int + statGains.int,
         def: profile.stats.def + statGains.def,
+        spd: profile.stats.spd + statGains.spd,
       }
     };
 
@@ -184,6 +187,26 @@ const ThemedApp: React.FC = () => {
       if(xpGained > 0) gainXP(xpGained);
     }
   }, [habits, gainXP, isOffline]);
+
+  const handleUpdateHabit = useCallback(async (habitId: string, updates: Partial<Omit<Habit, 'id' | 'user_id'>>) => {
+    if (isOffline) {
+        setHabits(prev => prev.map(h => h.id === habitId ? { ...h, ...updates } as Habit : h));
+        return;
+    }
+
+    const { data, error } = await supabase
+        .from('habits')
+        .update(updates)
+        .eq('id', habitId)
+        .select()
+        .single();
+    
+    if (error) {
+        console.error("Failed to update habit", error);
+    } else if (data) {
+        setHabits(prev => prev.map(h => h.id === habitId ? data : h));
+    }
+  }, [isOffline]);
   
   const handleAddNewHabits = async (newHabits: Omit<Habit, 'id' | 'user_id' | 'completed'>[]) => {
     if (isOffline) {
@@ -222,16 +245,16 @@ const ThemedApp: React.FC = () => {
     setHabits([]);
   };
 
-  const handleCreateProfile = async (name: string, characterClass: string, avatarOptions: AvatarOptions) => {
+  const handleCreateProfile = async (name: string, characterClass: string, avatarOptions: AvatarOptions, stats: Stats) => {
     if (isOffline) {
-      const newProfile = createInitialPlayerProfile('offline-user', characterClass, name, avatarOptions);
+      const newProfile = createInitialPlayerProfile('offline-user', characterClass, name, avatarOptions, stats);
       setProfile(newProfile as PlayerProfile);
       setCreatorModalOpen(false);
       return;
     }
 
     if (!session?.user) return;
-    const newProfile = createInitialPlayerProfile(session.user.id, characterClass, name, avatarOptions);
+    const newProfile = createInitialPlayerProfile(session.user.id, characterClass, name, avatarOptions, stats);
     
     const { data, error } = await supabase.from('profiles').insert(newProfile).select().single();
     
@@ -260,6 +283,7 @@ const ThemedApp: React.FC = () => {
             playerProfile={profile}
             habits={habits}
             onCompleteHabit={handleCompleteHabit}
+            onUpdateHabit={handleUpdateHabit}
             onAddNewHabits={handleAddNewHabits}
             onSignOut={handleSignOut}
           />
