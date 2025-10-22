@@ -15,10 +15,10 @@ const StatsPanel: React.FC<{ playerProfile: PlayerProfile }> = React.memo(({ pla
   return (
     <Card className="bg-card/80 backdrop-blur-sm sticky top-24">
       <CardHeader className="items-center text-center">
-        <div className="w-32 h-40 rounded-lg overflow-hidden border-2 border-border bg-secondary mb-4">
+        <div className="w-32 h-32 rounded-lg overflow-hidden border-2 border-border bg-secondary mb-4">
            <PlayerAvatar 
-            options={playerProfile.avatar_options} 
-            className="w-full h-full object-contain scale-125 origin-top animate-breathing"
+            options={playerProfile.avatar_options}
+            className="animate-breathing"
            />
         </div>
         <CardTitle className="text-2xl font-mono">{playerProfile.name}</CardTitle>

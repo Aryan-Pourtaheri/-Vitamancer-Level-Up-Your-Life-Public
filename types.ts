@@ -13,6 +13,9 @@ export interface AvatarOptions {
   outfitColor: string;
   accentColor: string;
   eyeStyle: 'normal' | 'happy' | 'angry' | 'sleepy';
+  hat: boolean;
+  weapon: 'sword' | 'staff' | 'bow' | 'none';
+  cloak: boolean;
 }
 
 export interface PlayerProfile {

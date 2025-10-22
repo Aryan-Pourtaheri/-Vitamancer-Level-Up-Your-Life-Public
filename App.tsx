@@ -56,7 +56,14 @@ const ThemedApp: React.FC = () => {
       .single();
 
     if (profileData) {
-      setProfile(profileData);
+      // Add defaults for new avatar options for backward compatibility
+      profileData.avatar_options = {
+        hat: false,
+        weapon: 'none',
+        cloak: false,
+        ...profileData.avatar_options,
+      };
+      setProfile(profileData as PlayerProfile);
     } else {
       setCreatorModalOpen(true);
     }

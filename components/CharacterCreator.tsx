@@ -96,6 +96,7 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
         
         const hairStyles: AvatarOptions['hairStyle'][] = ["spiky", "long", "short", "bun", "mohawk"];
         const eyeStyles: AvatarOptions['eyeStyle'][] = ["normal", "happy", "sleepy", "angry"];
+        const weaponStyles: AvatarOptions['weapon'][] = ["sword", "staff", "bow", "none"];
         const skinTones = ['#f2d3b1', '#e8b3a5', '#d5a38a', '#c09f8e', '#a07662'];
 
         const randomColor = () => `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`;
@@ -107,6 +108,9 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
             outfitColor: randomColor(),
             accentColor: randomColor(),
             eyeStyle: eyeStyles[Math.floor(Math.random() * eyeStyles.length)],
+            hat: Math.random() > 0.7,
+            cloak: Math.random() > 0.6,
+            weapon: weaponStyles[Math.floor(Math.random() * weaponStyles.length)],
         });
 
         // Distribute stat points
@@ -154,8 +158,8 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4">
                     {/* Left Panel: Preview & Core Info */}
                     <div className="flex flex-col items-center justify-between gap-4">
-                        <div className="w-64 h-80 rounded-lg overflow-hidden border-4 border-border bg-secondary shadow-lg">
-                           <PlayerAvatar options={avatarOptions} className="w-full h-full object-contain scale-125 origin-top animate-breathing" />
+                        <div className="w-64 h-64 rounded-lg overflow-hidden border-4 border-border bg-secondary shadow-lg">
+                           <PlayerAvatar options={avatarOptions} />
                         </div>
                         <div className="w-full max-w-sm space-y-3">
                              <Input
@@ -183,12 +187,17 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
                         </div>
                         {activeTab === 'appearance' && (
                            <div className="space-y-4">
-                                <AppearanceControl label="Skin" type="color" value={avatarOptions.skinColor} onUpdate={v => setAvatarOptions(p => ({...p, skinColor: v}))} />
-                                <AppearanceControl label="Hair Color" type="color" value={avatarOptions.hairColor} onUpdate={v => setAvatarOptions(p => ({...p, hairColor: v}))} />
+                                <AppearanceControl label="Skin" type="color" value={avatarOptions.skinColor} onUpdate={v => setAvatarOptions(p => ({...p, skinColor: v as string}))} />
+                                <AppearanceControl label="Hair Color" type="color" value={avatarOptions.hairColor} onUpdate={v => setAvatarOptions(p => ({...p, hairColor: v as string}))} />
                                 <AppearanceControl label="Hair Style" type="select" value={avatarOptions.hairStyle} onUpdate={v => setAvatarOptions(p => ({...p, hairStyle: v as any}))} options={['spiky', 'long', 'short', 'bun', 'mohawk']} />
                                 <AppearanceControl label="Eye Style" type="select" value={avatarOptions.eyeStyle} onUpdate={v => setAvatarOptions(p => ({...p, eyeStyle: v as any}))} options={['normal', 'happy', 'angry', 'sleepy']} />
-                                <AppearanceControl label="Outfit" type="color" value={avatarOptions.outfitColor} onUpdate={v => setAvatarOptions(p => ({...p, outfitColor: v}))} />
-                                <AppearanceControl label="Accent" type="color" value={avatarOptions.accentColor} onUpdate={v => setAvatarOptions(p => ({...p, accentColor: v}))} />
+                                <AppearanceControl label="Outfit" type="color" value={avatarOptions.outfitColor} onUpdate={v => setAvatarOptions(p => ({...p, outfitColor: v as string}))} />
+                                <AppearanceControl label="Accent" type="color" value={avatarOptions.accentColor} onUpdate={v => setAvatarOptions(p => ({...p, accentColor: v as string}))} />
+                                <AppearanceControl label="Weapon" type="select" value={avatarOptions.weapon} onUpdate={v => setAvatarOptions(p => ({...p, weapon: v as any}))} options={['none', 'sword', 'staff', 'bow']} />
+                                <div className="grid grid-cols-2 gap-4 pt-2">
+                                    <AppearanceControl label="Hat" type="checkbox" value={avatarOptions.hat} onUpdate={v => setAvatarOptions(p => ({...p, hat: v as boolean}))} />
+                                    <AppearanceControl label="Cloak" type="checkbox" value={avatarOptions.cloak} onUpdate={v => setAvatarOptions(p => ({...p, cloak: v as boolean}))} />
+                                </div>
                            </div>
                         )}
                         {activeTab === 'stats' && (
@@ -219,19 +228,21 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
 
 const AppearanceControl: React.FC<{
     label: string,
-    type: 'color' | 'select',
-    value: string,
-    onUpdate: (value: string) => void,
+    type: 'color' | 'select' | 'checkbox',
+    value: string | boolean,
+    onUpdate: (value: string | boolean) => void,
     options?: string[]
 }> = ({ label, type, value, onUpdate, options = [] }) => (
     <div className="flex items-center justify-between">
         <label className="font-semibold text-muted-foreground">{label}</label>
         {type === 'color' ? (
-            <input type="color" value={value} onChange={e => onUpdate(e.target.value)} className="w-24 h-10 p-1 bg-background border-2 border-input rounded-md" />
-        ) : (
-             <select value={value} onChange={e => onUpdate(e.target.value)} className="w-40 h-10 rounded-md border-2 border-input bg-background px-3 font-mono text-sm">
+            <input type="color" value={value as string} onChange={e => onUpdate(e.target.value)} className="w-24 h-10 p-1 bg-background border-2 border-input rounded-md" />
+        ) : type === 'select' ? (
+             <select value={value as string} onChange={e => onUpdate(e.target.value)} className="w-40 h-10 rounded-md border-2 border-input bg-background px-3 font-mono text-sm">
                 {options.map(o => <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>)}
             </select>
+        ) : (
+            <input type="checkbox" checked={value as boolean} onChange={e => onUpdate(e.target.checked)} className="w-6 h-6 rounded-md accent-primary" />
         )}
     </div>
 );

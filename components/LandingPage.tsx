@@ -158,8 +158,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                 <div className="grid grid-cols-3 gap-4">
                     {CHARACTER_CLASSES.slice(0, 6).map((charClass, i) => (
                         <div key={i} className="p-2 bg-secondary rounded-lg border-2 border-border aspect-square flex flex-col items-center justify-center">
-                             <div className="w-16 h-20 bg-background/50 rounded-md flex items-center justify-center overflow-hidden">
-                                <PlayerAvatar options={charClass.avatar} className="w-full h-full scale-[1.75] origin-bottom" />
+                             <div className="w-20 h-20 bg-background/50 rounded-md flex items-center justify-center overflow-hidden">
+                                <PlayerAvatar options={charClass.avatar} />
                             </div>
                             <p className="text-sm font-mono mt-2">{charClass.name}</p>
                         </div>
@@ -231,7 +231,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                       </CardContent>
                       <CardHeader className="pt-0">
                           <div className="flex items-center gap-3">
-                              <div className="w-16 h-20 bg-background/50 rounded-md flex items-center justify-center overflow-hidden"><PlayerAvatar options={{skinColor: "#e8b3a5", hairColor: "#b0632b", hairStyle: "long", outfitColor: "#4682B4", accentColor: "#FFF8DC", eyeStyle: "happy"}} className="w-full h-full scale-150 origin-bottom"/></div>
+                              <div className="w-16 h-16 bg-background/50 rounded-md flex items-center justify-center overflow-hidden"><PlayerAvatar options={{skinColor: "#e8b3a5", hairColor: "#b0632b", hairStyle: "long", outfitColor: "#4682B4", accentColor: "#FFF8DC", eyeStyle: "happy", hat: false, weapon: 'none', cloak: true}} /></div>
                               <div>
                                   <p className="font-semibold font-mono">Alex M.</p>
                                   <p className="text-sm text-muted-foreground">Level 12 Mage</p>
@@ -247,7 +247,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                       </CardContent>
                       <CardHeader className="pt-0">
                           <div className="flex items-center gap-3">
-                               <div className="w-16 h-20 bg-background/50 rounded-md flex items-center justify-center overflow-hidden"><PlayerAvatar options={{skinColor: "#c09f8e", hairColor: "#2c222b", hairStyle: "short", outfitColor: "#2E8B57", accentColor: "#F0E68C", eyeStyle: "normal"}} className="w-full h-full scale-150 origin-bottom"/></div>
+                               <div className="w-16 h-16 bg-background/50 rounded-md flex items-center justify-center overflow-hidden"><PlayerAvatar options={{skinColor: "#c09f8e", hairColor: "#2c222b", hairStyle: "short", outfitColor: "#2E8B57", accentColor: "#F0E68C", eyeStyle: "normal", hat: true, weapon: 'bow', cloak: false}} /></div>
                               <div>
                                   <p className="font-semibold font-mono">Sara K.</p>
                                   <p className="text-sm text-muted-foreground">Level 9 Rogue</p>
@@ -263,7 +263,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                       </CardContent>
                        <CardHeader className="pt-0">
                           <div className="flex items-center gap-3">
-                               <div className="w-16 h-20 bg-background/50 rounded-md flex items-center justify-center overflow-hidden"><PlayerAvatar options={{skinColor: "#d5a38a", hairColor: "#8c6f60", hairStyle: "spiky", outfitColor: "#A52A2A", accentColor: "#D2B48C", eyeStyle: "angry"}} className="w-full h-full scale-150 origin-bottom"/></div>
+                               <div className="w-16 h-16 bg-background/50 rounded-md flex items-center justify-center overflow-hidden"><PlayerAvatar options={{skinColor: "#d5a38a", hairColor: "#8c6f60", hairStyle: "spiky", outfitColor: "#A52A2A", accentColor: "#D2B48C", eyeStyle: "angry", hat: false, weapon: 'sword', cloak: false}} /></div>
                               <div>
                                   <p className="font-semibold font-mono">Dave R.</p>
                                   <p className="text-sm text-muted-foreground">Level 15 Warrior</p>
