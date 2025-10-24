@@ -159,7 +159,7 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
                     {/* Left Panel: Preview & Core Info */}
                     <div className="flex flex-col items-center justify-between gap-4">
                         <div className="w-64 h-64 rounded-lg overflow-hidden border-4 border-border bg-secondary shadow-lg">
-                           <PlayerAvatar options={avatarOptions} />
+                           <PlayerAvatar options={avatarOptions} characterClass={selectedClass.name} />
                         </div>
                         <div className="w-full max-w-sm space-y-3">
                              <Input
