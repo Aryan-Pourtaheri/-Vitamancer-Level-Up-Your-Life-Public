@@ -55,4 +55,5 @@ export interface CharacterClass {
   name: string;
   description: string;
   avatar: AvatarOptions;
+  baseStats: Stats;
 }

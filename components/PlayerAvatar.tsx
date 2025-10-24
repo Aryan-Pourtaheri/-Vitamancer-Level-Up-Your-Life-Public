@@ -1,4 +1,5 @@
 
+
 import React, { useRef, useEffect } from 'react';
 import { AvatarOptions } from '../types';
 import { cn } from '../lib/utils';
@@ -77,7 +78,9 @@ const drawHead = (ctx: RenderContext, headY: number, cx: number) => {
         // FIX: Replaced `vLine` calls with `fillRect` and a width of 1 to resolve argument mismatch issues.
         case 'angry': { hLine(ctx, eyeY, cx-4, 4, p.outline); hLine(ctx, eyeY, cx+1, 4, p.outline); fillRect(ctx, eyeY+1, cx-2, 2, 1, p.outline); fillRect(ctx, eyeY+1, cx+3, 2, 1, p.outline); break; }
         case 'sleepy': { hLine(ctx, eyeY + 1, cx - 3, 3, p.outline); hLine(ctx, eyeY + 1, cx + 1, 3, p.outline); break; }
-        default: { fillRect(ctx, eyeY, cx - 3, 2, 2, p.outline); fillRect(ctx, eyeY, cx + 2, 2, p.outline); break; }
+        default: { fillRect(ctx, eyeY, cx - 3, 2, 2, p.outline); 
+// FIX: Added the missing width argument (2) to the fillRect call to match its signature (6 arguments).
+fillRect(ctx, eyeY, cx + 2, 2, 2, p.outline); break; }
     }
 };
 

@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import Button from './PixelButton';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from './Modal';
 import { Input } from './Input';
@@ -30,13 +30,6 @@ interface CharacterCreatorProps {
 const MAX_STAT_POINTS = 30;
 const MIN_STAT_VALUE = 1;
 const STAT_NAMES: (keyof Stats)[] = ['str', 'int', 'def', 'spd'];
-
-const DEFAULT_CHARACTER = {
-    name: "",
-    class: CHARACTER_CLASSES[0],
-    avatar: CHARACTER_CLASSES[0].avatar,
-    stats: { str: 7, int: 7, def: 7, spd: 9 }
-};
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
@@ -69,13 +62,18 @@ const StatControl: React.FC<{
 
 
 const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, onCreateProfile }) => {
-    const [name, setName] = useState(DEFAULT_CHARACTER.name);
-    const [selectedClass, setSelectedClass] = useState<CharacterClass>(DEFAULT_CHARACTER.class);
-    const [avatarOptions, setAvatarOptions] = useState<AvatarOptions>(DEFAULT_CHARACTER.avatar);
-    const [stats, setStats] = useState<Stats>(DEFAULT_CHARACTER.stats);
+    const [name, setName] = useState('');
+    const [selectedClass, setSelectedClass] = useState<CharacterClass>(CHARACTER_CLASSES[0]);
+    const [avatarOptions, setAvatarOptions] = useState<AvatarOptions>(CHARACTER_CLASSES[0].avatar);
+    const [stats, setStats] = useState<Stats>(CHARACTER_CLASSES[0].baseStats);
     
     const [activeTab, setActiveTab] = useState<'appearance' | 'stats'>('appearance');
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        setAvatarOptions(selectedClass.avatar);
+        setStats(selectedClass.baseStats);
+    }, [selectedClass]);
 
     const pointsUsed = useMemo(() => STAT_NAMES.reduce((sum, key) => sum + stats[key], 0), [stats]);
     const pointsRemaining = MAX_STAT_POINTS - pointsUsed;
@@ -136,10 +134,8 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
     }, []);
     
     const reset = useCallback(() => {
-        setName(DEFAULT_CHARACTER.name);
-        setSelectedClass(DEFAULT_CHARACTER.class);
-        setAvatarOptions(DEFAULT_CHARACTER.avatar);
-        setStats(DEFAULT_CHARACTER.stats);
+        setName('');
+        setSelectedClass(CHARACTER_CLASSES[0]);
     }, []);
 
     const handleSubmit = async () => {
