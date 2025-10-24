@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import Button from './PixelButton';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from './Modal';
@@ -33,41 +32,12 @@ const STAT_NAMES: (keyof Stats)[] = ['str', 'int', 'def', 'spd'];
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
-const TabButton: React.FC<{ active: boolean; onClick: () => void; children: React.ReactNode }> = ({ active, onClick, children }) => (
-    <button onClick={onClick} className={cn('flex-1 p-2 font-mono font-bold text-center border-b-4 transition-colors', active ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground')}>
-        {children}
-    </button>
-);
-
-const StatControl: React.FC<{
-    label: string;
-    value: number;
-    onUpdate: (value: number) => void;
-}> = ({ label, value, onUpdate }) => (
-    <div className="grid grid-cols-6 items-center gap-3">
-        <label className="col-span-2 text-sm font-semibold uppercase text-muted-foreground">{label}</label>
-        <div className="col-span-3">
-            <input
-                type="range"
-                min={MIN_STAT_VALUE}
-                max={15} // Set a reasonable max for one stat
-                value={value}
-                onChange={(e) => onUpdate(parseInt(e.target.value, 10))}
-                className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
-            />
-        </div>
-        <div className="col-span-1 text-right text-lg font-mono font-bold">{value}</div>
-    </div>
-);
-
-
 const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, onCreateProfile }) => {
     const [name, setName] = useState('');
     const [selectedClass, setSelectedClass] = useState<CharacterClass>(CHARACTER_CLASSES[0]);
     const [avatarOptions, setAvatarOptions] = useState<AvatarOptions>(CHARACTER_CLASSES[0].avatar);
     const [stats, setStats] = useState<Stats>(CHARACTER_CLASSES[0].baseStats);
     
-    const [activeTab, setActiveTab] = useState<'appearance' | 'stats'>('appearance');
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -83,7 +53,7 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
             const currentTotal = pointsUsed - prev[stat];
             const newValue = clamp(value, MIN_STAT_VALUE, 15);
             const newTotal = currentTotal + newValue;
-            if (newTotal > MAX_STAT_POINTS) return prev; // Don't allow update if it exceeds total points
+            if (newTotal > MAX_STAT_POINTS) return prev; 
             return { ...prev, [stat]: newValue };
         });
     };
@@ -111,7 +81,6 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
             weapon: weaponStyles[Math.floor(Math.random() * weaponStyles.length)],
         });
 
-        // Distribute stat points
         let remainingPoints = MAX_STAT_POINTS - (STAT_NAMES.length * MIN_STAT_VALUE);
         const newStats: Stats = { str: 1, int: 1, def: 1, spd: 1 };
         STAT_NAMES.forEach(stat => {
@@ -119,7 +88,6 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
             newStats[stat] += points;
             remainingPoints -= points;
         });
-        // Distribute any leftover points
         let i = 0;
         while(remainingPoints > 0) {
             const stat = STAT_NAMES[i % STAT_NAMES.length];
@@ -147,17 +115,19 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
     
     return (
         <Modal open={isOpen} onOpenChange={onClose}>
-            <ModalContent className="max-w-5xl">
+            <ModalContent className="max-w-6xl">
                 <ModalHeader>
-                    <ModalTitle className="text-3xl font-mono font-bold">Forge Your Hero</ModalTitle>
+                    <ModalTitle className="text-3xl font-mono font-bold text-center w-full">Forge Your Hero</ModalTitle>
                 </ModalHeader>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4">
-                    {/* Left Panel: Preview & Core Info */}
-                    <div className="flex flex-col items-center justify-between gap-4">
-                        <div className="w-64 h-64 rounded-lg overflow-hidden border-4 border-border bg-secondary shadow-lg">
-                           <PlayerAvatar options={avatarOptions} characterClass={selectedClass.name} />
-                        </div>
-                        <div className="w-full max-w-sm space-y-3">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 py-4">
+                    
+                    {/* --- Left Panel: Preview & Finalize --- */}
+                    <div className="lg:col-span-1 flex flex-col items-center justify-between gap-4 p-4 bg-secondary/30 rounded-lg border-2 border-border">
+                        <div className="w-full flex-grow flex flex-col items-center gap-4">
+                            <div className="w-64 h-64 rounded-lg overflow-hidden border-4 border-border bg-background shadow-lg relative">
+                                <div className="absolute inset-0 bg-grid-pattern opacity-100 dark:opacity-40"></div>
+                                <PlayerAvatar options={avatarOptions} characterClass={selectedClass.name} />
+                            </div>
                              <Input
                                 id="char-name"
                                 placeholder="Enter your hero's name"
@@ -165,62 +135,106 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
                                 onChange={(e) => setName(e.target.value)}
                                 className="text-center text-lg h-12 font-mono"
                              />
-                             <select value={selectedClass.name} onChange={(e) => setSelectedClass(CHARACTER_CLASSES.find(c => c.name === e.target.value) || CHARACTER_CLASSES[0])} className="w-full h-12 rounded-md border-2 border-input bg-background px-3 font-mono text-lg text-center appearance-none">
-                                {CHARACTER_CLASSES.map(c => <option key={c.name}>{c.name}</option>)}
-                             </select>
+                            <div className="flex gap-2 w-full">
+                                <Button variant="outline" onClick={randomize} className="w-full"><DiceIcon className="w-4 h-4 mr-2" /> Random</Button>
+                                <Button variant="ghost" onClick={reset} className="w-full"><ResetIcon className="w-4 h-4 mr-2" /> Reset</Button>
+                            </div>
                         </div>
-                        <div className="flex gap-2">
-                            <Button variant="outline" onClick={randomize}><DiceIcon className="w-4 h-4 mr-2" /> Randomize</Button>
-                            <Button variant="ghost" onClick={reset}><ResetIcon className="w-4 h-4 mr-2" /> Reset</Button>
+
+                        <div className="w-full mt-auto pt-4">
+                            <Button onClick={handleSubmit} disabled={!name.trim() || loading || pointsRemaining < 0} className="w-full" size="lg">
+                                {loading ? "Creating Hero..." : "Begin Your Journey"}
+                            </Button>
+                            {pointsRemaining < 0 && <p className="text-destructive text-center mt-2 text-sm">You have used too many stat points!</p>}
                         </div>
                     </div>
 
-                    {/* Right Panel: Customization */}
-                    <div className="bg-secondary/30 p-4 rounded-lg border-2 border-border">
-                        <div className="flex mb-4">
-                            <TabButton active={activeTab === 'appearance'} onClick={() => setActiveTab('appearance')}>Appearance</TabButton>
-                            <TabButton active={activeTab === 'stats'} onClick={() => setActiveTab('stats')}>Stats</TabButton>
+                    {/* --- Right Panel: Customization --- */}
+                    <div className="lg:col-span-2 space-y-6 overflow-y-auto max-h-[70vh] p-4 -mr-2 pr-6">
+                       {/* Class Selector */}
+                        <div>
+                            <h3 className="text-xl font-mono font-bold mb-3 text-primary">1. Choose Class</h3>
+                            <div className="flex gap-3 pb-3 -mx-2 px-2 overflow-x-auto">
+                                {CHARACTER_CLASSES.map(c => (
+                                <ClassCard key={c.name} characterClass={c} isSelected={selectedClass.name === c.name} onSelect={setSelectedClass} />
+                                ))}
+                            </div>
                         </div>
-                        {activeTab === 'appearance' && (
-                           <div className="space-y-4">
-                                <AppearanceControl label="Skin" type="color" value={avatarOptions.skinColor} onUpdate={v => setAvatarOptions(p => ({...p, skinColor: v as string}))} />
-                                <AppearanceControl label="Hair Color" type="color" value={avatarOptions.hairColor} onUpdate={v => setAvatarOptions(p => ({...p, hairColor: v as string}))} />
+                        
+                        {/* Appearance Controls */}
+                        <div>
+                            <h3 className="text-xl font-mono font-bold mb-4 text-primary">2. Customize Appearance</h3>
+                            <div className="space-y-3 p-4 bg-secondary/30 rounded-lg border-2 border-border">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <AppearanceControl label="Skin" type="color" value={avatarOptions.skinColor} onUpdate={v => setAvatarOptions(p => ({...p, skinColor: v as string}))} />
+                                    <AppearanceControl label="Hair" type="color" value={avatarOptions.hairColor} onUpdate={v => setAvatarOptions(p => ({...p, hairColor: v as string}))} />
+                                </div>
                                 <AppearanceControl label="Hair Style" type="select" value={avatarOptions.hairStyle} onUpdate={v => setAvatarOptions(p => ({...p, hairStyle: v as any}))} options={['spiky', 'long', 'short', 'bun', 'mohawk']} />
                                 <AppearanceControl label="Eye Style" type="select" value={avatarOptions.eyeStyle} onUpdate={v => setAvatarOptions(p => ({...p, eyeStyle: v as any}))} options={['normal', 'happy', 'angry', 'sleepy']} />
-                                <AppearanceControl label="Outfit" type="color" value={avatarOptions.outfitColor} onUpdate={v => setAvatarOptions(p => ({...p, outfitColor: v as string}))} />
-                                <AppearanceControl label="Accent" type="color" value={avatarOptions.accentColor} onUpdate={v => setAvatarOptions(p => ({...p, accentColor: v as string}))} />
+                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <AppearanceControl label="Outfit" type="color" value={avatarOptions.outfitColor} onUpdate={v => setAvatarOptions(p => ({...p, outfitColor: v as string}))} />
+                                    <AppearanceControl label="Accent" type="color" value={avatarOptions.accentColor} onUpdate={v => setAvatarOptions(p => ({...p, accentColor: v as string}))} />
+                                </div>
                                 <AppearanceControl label="Weapon" type="select" value={avatarOptions.weapon} onUpdate={v => setAvatarOptions(p => ({...p, weapon: v as any}))} options={['none', 'sword', 'staff', 'bow']} />
                                 <div className="grid grid-cols-2 gap-4 pt-2">
                                     <AppearanceControl label="Hat" type="checkbox" value={avatarOptions.hat} onUpdate={v => setAvatarOptions(p => ({...p, hat: v as boolean}))} />
                                     <AppearanceControl label="Cloak" type="checkbox" value={avatarOptions.cloak} onUpdate={v => setAvatarOptions(p => ({...p, cloak: v as boolean}))} />
                                 </div>
                            </div>
-                        )}
-                        {activeTab === 'stats' && (
-                           <div className="space-y-4">
-                                <div className="text-center p-2 rounded-lg bg-background border-2 border-border">
+                        </div>
+
+                        {/* Stats Controls */}
+                        <div>
+                            <h3 className="text-xl font-mono font-bold mb-4 text-primary">3. Allocate Stats</h3>
+                            <div className="p-4 bg-secondary/30 rounded-lg border-2 border-border space-y-4">
+                                <div className="text-center p-3 rounded-lg bg-background border-2 border-border">
                                     <p className="font-mono text-muted-foreground">Points Remaining</p>
-                                    <p className={cn("text-4xl font-mono font-bold", pointsRemaining < 0 ? 'text-destructive' : 'text-primary')}>{pointsRemaining}</p>
+                                    <p className={cn("text-4xl font-mono font-bold transition-colors", pointsRemaining < 0 ? 'text-destructive' : 'text-primary')}>{pointsRemaining}</p>
                                 </div>
-                                <div className="space-y-3 pt-2">
+                                <div className="space-y-2">
                                     {STAT_NAMES.map(stat => (
-                                        <StatControl key={stat} label={stat} value={stats[stat]} onUpdate={v => handleStatUpdate(stat, v)} />
+                                        <StatControl key={stat} label={stat} value={stats[stat]} onUpdate={v => handleStatUpdate(stat, v)} canIncrement={pointsRemaining > 0}/>
                                     ))}
                                 </div>
-                           </div>
-                        )}
+                            </div>
+                        </div>
+
                     </div>
-                </div>
-                <div className="pt-6 border-t-2 border-border mt-4">
-                    <Button onClick={handleSubmit} disabled={!name.trim() || loading || pointsRemaining < 0} className="w-full" size="lg">
-                        {loading ? "Creating Hero..." : "Begin Your Journey"}
-                    </Button>
-                    {pointsRemaining < 0 && <p className="text-destructive text-center mt-2 text-sm">You have allocated too many stat points!</p>}
                 </div>
             </ModalContent>
         </Modal>
     );
 };
+
+const ClassCard: React.FC<{ characterClass: CharacterClass; isSelected: boolean; onSelect: (c: CharacterClass) => void; }> = ({ characterClass, isSelected, onSelect }) => (
+    <button
+      onClick={() => onSelect(characterClass)}
+      className={cn(
+        "flex-shrink-0 w-40 p-3 rounded-lg border-2 text-left cursor-pointer transition-all transform hover:-translate-y-1",
+        isSelected ? "bg-primary/20 border-primary shadow-lg" : "bg-background border-border hover:border-primary/50"
+      )}
+    >
+      <div className="w-24 h-24 mx-auto bg-secondary rounded-md border-2 border-border mb-2 overflow-hidden">
+        <PlayerAvatar options={characterClass.avatar} characterClass={characterClass.name} playing={false} />
+      </div>
+      <h4 className="font-mono font-bold text-center text-card-foreground">{characterClass.name}</h4>
+      <p className="text-xs text-muted-foreground text-center mt-1 h-12 overflow-hidden">{characterClass.description}</p>
+    </button>
+);
+
+
+const OptionButton: React.FC<{ onClick: () => void; isActive: boolean; children: React.ReactNode; }> = ({ onClick, isActive, children }) => (
+    <button
+        type="button"
+        onClick={onClick}
+        className={cn(
+            'px-2 py-1 text-sm rounded-md border-2 capitalize transition-all font-mono',
+            isActive ? 'bg-primary text-primary-foreground border-primary-foreground/20' : 'bg-secondary border-border hover:border-primary/50'
+        )}
+    >
+        {children}
+    </button>
+);
 
 const AppearanceControl: React.FC<{
     label: string,
@@ -228,18 +242,55 @@ const AppearanceControl: React.FC<{
     value: string | boolean,
     onUpdate: (value: string | boolean) => void,
     options?: string[]
-}> = ({ label, type, value, onUpdate, options = [] }) => (
-    <div className="flex items-center justify-between">
-        <label className="font-semibold text-muted-foreground">{label}</label>
-        {type === 'color' ? (
-            <input type="color" value={value as string} onChange={e => onUpdate(e.target.value)} className="w-24 h-10 p-1 bg-background border-2 border-input rounded-md" />
-        ) : type === 'select' ? (
-             <select value={value as string} onChange={e => onUpdate(e.target.value)} className="w-40 h-10 rounded-md border-2 border-input bg-background px-3 font-mono text-sm">
-                {options.map(o => <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>)}
-            </select>
-        ) : (
-            <input type="checkbox" checked={value as boolean} onChange={e => onUpdate(e.target.checked)} className="w-6 h-6 rounded-md accent-primary" />
-        )}
+}> = ({ label, type, value, onUpdate, options = [] }) => {
+    if (type === 'select') {
+        return (
+            <div className="flex items-center justify-between">
+                <label className="font-semibold text-muted-foreground">{label}</label>
+                <div className="flex gap-1 flex-wrap justify-end">
+                    {options.map(o => <OptionButton key={o} onClick={() => onUpdate(o)} isActive={value === o}>{o}</OptionButton>)}
+                </div>
+            </div>
+        );
+    }
+    return (
+        <div className="flex items-center justify-between">
+            <label className="font-semibold text-muted-foreground">{label}</label>
+            {type === 'color' ? (
+                <input type="color" value={value as string} onChange={e => onUpdate(e.target.value)} className="w-24 h-10 p-1 bg-background border-2 border-input rounded-md" />
+            ) : (
+                <input type="checkbox" checked={value as boolean} onChange={e => onUpdate(e.target.checked)} className="w-6 h-6 rounded-md accent-primary" />
+            )}
+        </div>
+    );
+};
+
+const StatControlButton: React.FC<{ onClick: () => void; disabled?: boolean; children: React.ReactNode }> = ({ onClick, disabled, children }) => (
+  <button onClick={onClick} disabled={disabled} className="w-8 h-8 rounded-md bg-secondary border-2 border-border text-lg font-bold disabled:opacity-50 active:bg-primary/20 transition-colors">
+      {children}
+  </button>
+)
+
+const StatControl: React.FC<{ label: string; value: number; onUpdate: (value: number) => void; canIncrement: boolean }> = ({ label, value, onUpdate, canIncrement }) => (
+    <div className="grid grid-cols-12 items-center gap-2">
+        <label className="col-span-2 text-sm font-semibold uppercase text-muted-foreground">{label}</label>
+        <div className="col-span-1 flex justify-center">
+            <StatControlButton onClick={() => onUpdate(value - 1)} disabled={value <= MIN_STAT_VALUE}>-</StatControlButton>
+        </div>
+        <div className="col-span-6">
+            <input
+                type="range"
+                min={MIN_STAT_VALUE}
+                max={15}
+                value={value}
+                onChange={(e) => onUpdate(parseInt(e.target.value, 10))}
+                className="w-full h-2 bg-background rounded-lg appearance-none cursor-pointer accent-primary"
+            />
+        </div>
+        <div className="col-span-2 text-center text-lg font-mono font-bold">{value}</div>
+        <div className="col-span-1 flex justify-center">
+            <StatControlButton onClick={() => onUpdate(value + 1)} disabled={value >= 15 || !canIncrement}>+</StatControlButton>
+        </div>
     </div>
 );
 
