@@ -8,7 +8,7 @@ import { ThemeToggleButton } from '../ThemeToggleButton';
 
 const HeartIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props} className="w-4 h-4 text-red-500 pixelated">
-        <path d="M6 3h3v1h1v1h1v1h2V5h1V4h1V3h3v1h1v1h1v3h-1v1h-1v1h-1v1h-1v1h-2v-1H9v-1H8V9H7V8H6V5h1V4h-1V3z" />
+        <path d="M6 3h3v1h1v1h1v1h2V5h1V4h1V3h3v1h1v1h1v3h-1v1h-1v1h-1v1h-2v-1H9v-1H8V9H7V8H6V5h1V4h-1V3z" />
     </svg>
 );
 
@@ -36,6 +36,10 @@ const UserIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
 );
 
+const SwordsIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 21-5-5-6 6"/><path d="m21 15-5-5-6 6"/><path d="M3.5 14.5 10 8"/><path d="M9.5 3.5 16 10"/></svg>
+);
+
 const StatDisplay: React.FC<{ icon: React.ReactNode; value: number | string; }> = ({ icon, value }) => (
     <div className="flex items-center space-x-1.5 text-sm bg-secondary/50 px-2 py-1 rounded-md">
         {icon}
@@ -47,13 +51,15 @@ const StatDisplay: React.FC<{ icon: React.ReactNode; value: number | string; }> 
 interface HeaderProps {
   playerProfile: PlayerProfile;
   onSignOut: () => void;
-  onNavigateToBoard?: () => void;
-  onNavigateToDashboard?: () => void;
-  onNavigateToAccount?: () => void;
-  activeView: 'dashboard' | 'board' | 'account';
+  onNavigateToBoard: () => void;
+  onNavigateToDashboard: () => void;
+  onNavigateToAccount: () => void;
+  onNavigateToDungeon: () => void;
+  activeView: 'dashboard' | 'board' | 'account' | 'dungeon';
+  dungeonAlert: boolean;
 }
 
-const Header: React.FC<HeaderProps> = React.memo(({ playerProfile, onSignOut, onNavigateToBoard, onNavigateToDashboard, onNavigateToAccount, activeView }) => {
+const Header: React.FC<HeaderProps> = React.memo(({ playerProfile, onSignOut, onNavigateToBoard, onNavigateToDashboard, onNavigateToAccount, onNavigateToDungeon, activeView, dungeonAlert }) => {
   const xpToNext = xpForLevel(playerProfile.level);
   const xpCurrentLevel = xpForLevel(playerProfile.level - 1) || 0;
   const currentLevelProgress = playerProfile.xp - xpCurrentLevel;
@@ -84,25 +90,26 @@ const Header: React.FC<HeaderProps> = React.memo(({ playerProfile, onSignOut, on
             <StatDisplay icon={<HeartIcon />} value={`${playerProfile.hp}/${playerProfile.maxHp}`} />
             <StatDisplay icon={<ManaIcon />} value={`${playerProfile.mp}/${playerProfile.maxMp}`} />
             <StatDisplay icon={<GoldIcon />} value={playerProfile.gold} />
-             {activeView === 'dashboard' && onNavigateToBoard && (
-                <Button variant="outline" size="sm" onClick={onNavigateToBoard} className="hidden sm:inline-flex items-center gap-1.5"><CalendarDaysIcon className="h-4 w-4" /> Board</Button>
-            )}
-            {activeView === 'board' && onNavigateToDashboard && (
-                <Button variant="outline" size="sm" onClick={onNavigateToDashboard} className="hidden sm:inline-flex items-center gap-1.5"><LayoutGridIcon className="h-4 w-4" /> List</Button>
-            )}
+             
+            <nav className="hidden sm:flex items-center gap-1">
+                <Button variant={activeView === 'dashboard' ? 'secondary' : 'outline'} size="sm" onClick={onNavigateToDashboard} className="items-center gap-1.5"><LayoutGridIcon className="h-4 w-4" /> List</Button>
+                <Button variant={activeView === 'board' ? 'secondary' : 'outline'} size="sm" onClick={onNavigateToBoard} className="items-center gap-1.5"><CalendarDaysIcon className="h-4 w-4" /> Board</Button>
+                <Button variant={activeView === 'dungeon' ? 'secondary' : 'outline'} size="sm" onClick={onNavigateToDungeon} className="relative items-center gap-1.5">
+                    <SwordsIcon className="h-4 w-4" /> Dungeon
+                    {dungeonAlert && <span className="absolute -top-1 -right-1 flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-destructive/80"></span></span>}
+                </Button>
+            </nav>
             
-            {playerProfile.subscription_tier === 'free' && (
-                <Button size="sm" onClick={onNavigateToAccount} className="hidden sm:inline-flex animate-pulse">Upgrade</Button>
-            )}
-
-             <Button variant="outline" size="icon" className="h-9 w-9" onClick={onNavigateToAccount}>
-                <UserIcon className="h-4 w-4" />
-             </Button>
-            
-            <div className="hidden sm:block">
-              <ThemeToggleButton />
+            <div className="flex items-center gap-1">
+                <Button variant="outline" size="icon" className="h-9 w-9" onClick={onNavigateToAccount}>
+                    <UserIcon className="h-4 w-4" />
+                </Button>
+                
+                <div className="hidden sm:block">
+                  <ThemeToggleButton />
+                </div>
+                <Button variant="outline" size="sm" onClick={onSignOut}>Quit</Button>
             </div>
-            <Button variant="outline" size="sm" onClick={onSignOut}>Quit</Button>
         </div>
       </div>
     </header>

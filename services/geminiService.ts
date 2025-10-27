@@ -48,3 +48,50 @@ export const generateHabitSuggestions = async (goal: string): Promise<Omit<Habit
     throw new Error("Failed to get suggestions from Vitamancer AI. Please try again.");
   }
 };
+
+
+export const generateMonsterFromHabit = async (habitText: string, difficulty: 'easy' | 'medium' | 'hard'): Promise<{name: string, description: string, hp: number}> => {
+  if (!process.env.API_KEY) {
+    throw new Error("Vitamancer AI is not configured. Missing API Key.");
+  }
+  
+  const hpMap = { easy: 50, medium: 100, hard: 200 };
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `A user failed to complete this habit: "${habitText}". Create a fantasy RPG monster that represents this failure. Give it a creative, short name and a one-sentence description.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            name: {
+              type: Type.STRING,
+              description: 'The creative name of the monster, like "Procrastination Gremlin" or "Slothful Slime".',
+            },
+            description: {
+              type: Type.STRING,
+              description: 'A brief, one-sentence description of the monster.',
+            },
+          },
+          required: ["name", "description"],
+        },
+      },
+    });
+
+    const jsonText = response.text.trim();
+    const monsterData = JSON.parse(jsonText) as {name: string, description: string};
+    
+    return { ...monsterData, hp: hpMap[difficulty] };
+
+  } catch (error) {
+    console.error("Error generating monster:", error);
+    // Return a generic fallback monster on API error
+    return {
+        name: 'Generic Gremlin',
+        description: 'A pesky creature born from a forgotten task.',
+        hp: hpMap[difficulty],
+    };
+  }
+};

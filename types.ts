@@ -35,6 +35,7 @@ export interface PlayerProfile {
   created_at?: string;
   subscription_tier: 'free' | 'pro';
   pro_features_unlocked_at?: string | null;
+  last_monster_generation_at?: string | null;
 }
 
 export interface Item {
@@ -51,6 +52,17 @@ export interface Habit {
   status: 'not_started' | 'in_progress' | 'completed';
   notes?: string | null;
   created_at?: string;
+}
+
+export interface Monster {
+    id: string;
+    user_id: string;
+    name: string;
+    description: string;
+    hp: number;
+    maxHp: number;
+    linked_habit_id: string;
+    created_at?: string;
 }
 
 export interface CharacterClass {

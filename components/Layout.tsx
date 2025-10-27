@@ -9,7 +9,9 @@ interface LayoutProps {
   onNavigateToBoard: () => void;
   onNavigateToDashboard: () => void;
   onNavigateToAccount: () => void;
-  activeView: 'dashboard' | 'board' | 'account';
+  onNavigateToDungeon: () => void;
+  activeView: 'dashboard' | 'board' | 'account' | 'dungeon';
+  dungeonAlert: boolean;
   children: React.ReactNode;
 }
 
@@ -19,7 +21,9 @@ const Layout: React.FC<LayoutProps> = ({
   onNavigateToBoard, 
   onNavigateToDashboard, 
   onNavigateToAccount,
+  onNavigateToDungeon,
   activeView, 
+  dungeonAlert,
   children 
 }) => {
   return (
@@ -30,7 +34,9 @@ const Layout: React.FC<LayoutProps> = ({
         onNavigateToBoard={onNavigateToBoard}
         onNavigateToDashboard={onNavigateToDashboard}
         onNavigateToAccount={onNavigateToAccount}
+        onNavigateToDungeon={onNavigateToDungeon}
         activeView={activeView}
+        dungeonAlert={dungeonAlert}
       />
       {children}
     </div>

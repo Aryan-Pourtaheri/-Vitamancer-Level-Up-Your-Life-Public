@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Card, CardContent } from '../Card';
 import { ThemeToggleButton } from '../ThemeToggleButton';
@@ -6,9 +7,10 @@ import { ThemeToggleButton } from '../ThemeToggleButton';
 interface AuthLayoutProps {
   title: string;
   children: React.ReactNode;
+  onNavigateToLanding: () => void;
 }
 
-const AuthLayout: React.FC<AuthLayoutProps> = ({ title, children }) => {
+const AuthLayout: React.FC<AuthLayoutProps> = ({ title, children, onNavigateToLanding }) => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 relative">
        <div className="absolute inset-0 bg-grid-pattern opacity-50"></div>
@@ -16,7 +18,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({ title, children }) => {
         <ThemeToggleButton />
       </div>
       <div className="text-center mb-8 z-10">
-        <a href="#" onClick={(e) => { e.preventDefault(); window.location.reload(); }} className="text-4xl sm:text-5xl font-display tracking-widest hover:text-primary transition-colors no-underline">
+        <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToLanding(); }} className="text-4xl sm:text-5xl font-display tracking-widest hover:text-primary transition-colors no-underline">
           VITAMANCER
         </a>
         <h2 className="text-lg mt-4 text-muted-foreground font-mono">

@@ -6,7 +6,7 @@ import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
 import BoardPage from './components/BoardPage';
-import { PlayerProfile, Habit, AvatarOptions, Stats } from './types';
+import { PlayerProfile, Habit, AvatarOptions, Stats, Monster } from './types';
 import { xpForLevel, createInitialPlayerProfile } from './constants';
 import LevelUpModal from './components/LevelUpModal';
 import CharacterCreator from './components/CharacterCreator';
@@ -15,22 +15,23 @@ import Layout from './components/Layout';
 import LoginPage from './components/auth/LoginPage';
 import SignupPage from './components/auth/SignupPage';
 import AccountPage from './components/AccountPage';
+import DungeonPage from './components/DungeonPage';
+import { generateMonsterFromHabit } from './services/geminiService';
 
 const ThemedApp: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [habits, setHabits] = useState<Habit[]>([]);
+  const [monsters, setMonsters] = useState<Monster[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<'dashboard' | 'board' | 'account'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'board' | 'account' | 'dungeon'>('dashboard');
   
   const [authView, setAuthView] = useState<'landing' | 'login' | 'signup'>('landing');
   const [needsProfile, setNeedsProfile] = useState(false);
   const [isLevelUpModalOpen, setIsLevelUpModalOpen] = useState(false);
   const [levelUpInfo, setLevelUpInfo] = useState<{ oldLevel: number; newLevel: number } | null>(null);
 
-  // --- Data Initialization ---
   useEffect(() => {
-    // --- ONLINE MODE INIT ---
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
@@ -53,6 +54,7 @@ const ThemedApp: React.FC = () => {
       return;
     };
     
+    setLoading(true);
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
@@ -60,31 +62,82 @@ const ThemedApp: React.FC = () => {
       .single();
 
     if (profileData) {
-      profileData.avatar_options = { hat: false, weapon: 'none', cloak: false, ...profileData.avatar_options };
-      setProfile(profileData as PlayerProfile);
+        profileData.avatar_options = { hat: false, weapon: 'none', cloak: false, ...profileData.avatar_options };
+        const fetchedProfile = profileData as PlayerProfile;
+        setProfile(fetchedProfile);
+        
+        const { data: habitsData, error: habitsError } = await supabase.from('habits').select('*').eq('user_id', user.id);
+        if (habitsData) setHabits(habitsData);
+        if (habitsError) console.error('Error fetching habits:', habitsError);
+
+        const { data: monsterData, error: monsterError } = await supabase.from('monsters').select('*').eq('user_id', user.id);
+        if (monsterData) setMonsters(monsterData);
+        if (monsterError) console.error('Error fetching monsters:', monsterError);
+        
+        // This is where monster generation logic is triggered
+        await generateMonstersForFailedHabits(fetchedProfile, habitsData || []);
+
     } else {
       setNeedsProfile(true);
     }
 
     if (profileError && profileError.code !== 'PGRST116') console.error('Error fetching profile:', profileError);
-
-    const { data: habitsData, error: habitsError } = await supabase.from('habits').select('*').eq('user_id', user.id);
-    
-    if (habitsData) setHabits(habitsData);
-    if (habitsError) console.error('Error fetching habits:', habitsError);
     setLoading(false);
   }, []);
 
+  const generateMonstersForFailedHabits = async (playerProfile: PlayerProfile, currentHabits: Habit[]) => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const lastGenerationDate = playerProfile.last_monster_generation_at ? new Date(playerProfile.last_monster_generation_at) : null;
+
+      if (!lastGenerationDate || lastGenerationDate < today) {
+        console.log("Generating monsters for the new day...");
+        
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        const failedHabits = currentHabits.filter(h => {
+            const habitDate = new Date(h.created_at!);
+            return habitDate.toDateString() === yesterday.toDateString() && h.status !== 'completed';
+        });
+
+        if (failedHabits.length > 0) {
+            for (const habit of failedHabits) {
+                const monsterDetails = await generateMonsterFromHabit(habit.text, habit.difficulty);
+                const newMonster: Omit<Monster, 'id' | 'created_at'> = {
+                    user_id: playerProfile.id,
+                    name: monsterDetails.name,
+                    description: monsterDetails.description,
+                    hp: monsterDetails.hp,
+                    maxHp: monsterDetails.hp,
+                    linked_habit_id: habit.id,
+                };
+                const { data: createdMonster, error } = await supabase.from('monsters').insert(newMonster).select().single();
+                if (error) {
+                    console.error("Failed to save monster:", error);
+                } else if (createdMonster) {
+                    setMonsters(prev => [...prev, createdMonster]);
+                }
+            }
+        }
+
+        const { error: profileUpdateError } = await supabase.from('profiles')
+            .update({ last_monster_generation_at: today.toISOString() })
+            .eq('id', playerProfile.id);
+        
+        if (profileUpdateError) console.error("Failed to update last monster generation date:", profileUpdateError);
+      }
+  };
 
   useEffect(() => {
     if (session?.user) {
-      setLoading(true);
       setProfile(null);
       setNeedsProfile(false);
       fetchUserData(session.user);
     } else {
       setProfile(null);
       setHabits([]);
+      setMonsters([]);
       setLoading(false);
     }
   }, [session, fetchUserData]);
@@ -143,6 +196,21 @@ const ThemedApp: React.FC = () => {
             case 'hard': xpGained = 50; break;
         }
         if (xpGained > 0) gainXP(xpGained);
+
+        // Monster defeat logic
+        const monsterToDefeat = monsters.find(m => m.linked_habit_id === habitId);
+        if (monsterToDefeat) {
+            setMonsters(prev => prev.filter(m => m.id !== monsterToDefeat.id));
+            const bonusGold = 5;
+            setProfile(p => p ? ({ ...p, gold: p.gold + bonusGold }) : null);
+
+            // Update DB
+            await supabase.from('monsters').delete().eq('id', monsterToDefeat.id);
+            if (profile) await supabase.from('profiles').update({ gold: profile.gold + bonusGold }).eq('id', profile.id);
+
+            // TODO: Add a nice toast/notification for monster defeat!
+            console.log(`Monster ${monsterToDefeat.name} defeated! +${bonusGold} gold.`);
+        }
     }
 
     const updatedHabits = habits.map(h => h.id === habitId ? { ...h, ...updates } : h);
@@ -150,7 +218,7 @@ const ThemedApp: React.FC = () => {
     
     const { error } = await supabase.from('habits').update(updates).eq('id', habitId);
     if (error) console.error("Failed to update habit", error);
-  }, [habits, gainXP]);
+  }, [habits, gainXP, monsters, profile]);
   
   const handleAddNewHabits = async (newHabits: Omit<Habit, 'id' | 'user_id' | 'status' | 'created_at'>[]) => {
     const userId = session?.user?.id;
@@ -158,29 +226,18 @@ const ThemedApp: React.FC = () => {
       console.error("Attempted to add habits without a user session.");
       return;
     }
-
-    // Optimistically add habits with temporary IDs
-    const habitsToInsert = newHabits.map((h, i) => ({ 
-        ...h, 
-        id: `new_${Date.now()}_${i}`, // Temporary ID for React key
-        user_id: userId,
-        status: 'not_started' as const,
-        created_at: new Date().toISOString(),
-    }));
-    setHabits(prev => [...prev, ...habitsToInsert]);
-
-    const { error } = await supabase.from('habits')
-      .insert(newHabits.map(h => ({ ...h, user_id: userId, status: 'not_started' as const })))
+    
+    const habitsToInsert = newHabits.map(h => ({ ...h, user_id: userId, status: 'not_started' as const }));
+    
+    const { data: insertedHabits, error } = await supabase
+      .from('habits')
+      .insert(habitsToInsert)
       .select();
 
     if (error) {
       console.error("Failed to add new habits", error);
-      // NOTE: In a real app, you might want to roll back the optimistic update here.
-    }
-    
-    // Refetch all user data to ensure state is consistent with DB (including new habit IDs)
-    if (session?.user) {
-        fetchUserData(session.user);
+    } else if (insertedHabits) {
+      setHabits(prev => [...prev, ...insertedHabits]);
     }
   };
   
@@ -189,6 +246,7 @@ const ThemedApp: React.FC = () => {
     setSession(null);
     setProfile(null);
     setHabits([]);
+    setMonsters([]);
   };
 
   const handleCreateProfile = async (name: string, characterClass: string, avatarOptions: AvatarOptions, stats: Stats) => {
@@ -220,8 +278,8 @@ const ThemedApp: React.FC = () => {
 
   const renderUnauthenticatedOnline = () => {
     switch (authView) {
-      case 'login': return <LoginPage onNavigateToSignup={() => setAuthView('signup')} />;
-      case 'signup': return <SignupPage onNavigateToLogin={() => setAuthView('login')} />;
+      case 'login': return <LoginPage onNavigateToSignup={() => setAuthView('signup')} onNavigateToLanding={() => setAuthView('landing')} />;
+      case 'signup': return <SignupPage onNavigateToLogin={() => setAuthView('login')} onNavigateToLanding={() => setAuthView('landing')} />;
       case 'landing': default: return (
         <LandingPage onSignupClick={() => setAuthView('signup')} onLoginClick={() => setAuthView('login')} />
       );
@@ -242,11 +300,14 @@ const ThemedApp: React.FC = () => {
             onNavigateToBoard={() => setActiveView('board')}
             onNavigateToDashboard={() => setActiveView('dashboard')}
             onNavigateToAccount={() => setActiveView('account')}
+            onNavigateToDungeon={() => setActiveView('dungeon')}
             activeView={activeView}
+            dungeonAlert={monsters.length > 0}
           >
-            {activeView === 'dashboard' && <Dashboard playerProfile={profile} habits={habits} onUpdateHabit={handleUpdateHabit} onAddNewHabits={handleAddNewHabits} onNavigateToAccount={() => setActiveView('account')} />}
+            {activeView === 'dashboard' && <Dashboard playerProfile={profile} habits={habits} onUpdateHabit={handleUpdateHabit} onAddNewHabits={handleAddNewHabits} onNavigateToAccount={() => setActiveView('account')} onNavigateToDungeon={() => setActiveView('dungeon')} monsters={monsters} />}
             {activeView === 'board' && <BoardPage habits={habits} onUpdateHabit={handleUpdateHabit} />}
             {activeView === 'account' && <AccountPage playerProfile={profile} onUpgrade={handleUpgrade} />}
+            {activeView === 'dungeon' && <DungeonPage monsters={monsters} habits={habits} onUpdateHabit={handleUpdateHabit} />}
           </Layout>
           {isLevelUpModalOpen && levelUpInfo && <LevelUpModal level={levelUpInfo.newLevel} onClose={() => setIsLevelUpModalOpen(false)} />}
         </>

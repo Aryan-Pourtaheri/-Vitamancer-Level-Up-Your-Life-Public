@@ -1,7 +1,8 @@
 
 
+// FIX: Corrected import syntax for useState.
 import React, { useState } from 'react';
-import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
+import { supabase } from '../../lib/supabaseClient';
 import Button from '../PixelButton';
 import { Input } from '../Input';
 import AuthLayout from './AuthLayout';
@@ -20,9 +21,10 @@ const GitHubIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 interface LoginPageProps {
   onNavigateToSignup: () => void;
+  onNavigateToLanding: () => void;
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ onNavigateToSignup }) => {
+const LoginPage: React.FC<LoginPageProps> = ({ onNavigateToSignup, onNavigateToLanding }) => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,12 +32,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigateToSignup }) => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!isSupabaseConfigured) {
-      setError("Vitamancer is not configured for online play. Please contact the administrator.");
-      return;
-    }
-
     setLoading(true);
     setError('');
 
@@ -51,10 +47,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigateToSignup }) => {
   };
 
   const handleOAuthLogin = async (provider: 'google' | 'github') => {
-    if (!isSupabaseConfigured) {
-      setError("Vitamancer is not configured for online play. Please contact the administrator.");
-      return;
-    }
     setLoading(true);
     setError('');
     const { error } = await supabase.auth.signInWithOAuth({ provider });
@@ -65,7 +57,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigateToSignup }) => {
   };
 
   return (
-    <AuthLayout title="Welcome Back, Adventurer">
+    <AuthLayout title="Welcome Back, Adventurer" onNavigateToLanding={onNavigateToLanding}>
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-2">
             <Button variant="outline" className="w-full flex items-center justify-center gap-2" onClick={() => handleOAuthLogin('google')} disabled={loading}>

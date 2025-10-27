@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { PlayerProfile, Habit } from '../types';
+import { PlayerProfile, Habit, Monster } from '../types';
 import HabitList from './dashboard/HabitList';
 import StatsPanel from './dashboard/StatsPanel';
 import HabitGenerator from './dashboard/HabitGenerator';
@@ -11,9 +11,11 @@ import { Card, CardContent, CardHeader, CardTitle } from './Card';
 interface DashboardProps {
   playerProfile: PlayerProfile;
   habits: Habit[];
+  monsters: Monster[];
   onUpdateHabit: (habitId: string, updates: Partial<Habit>) => void;
   onAddNewHabits: (habits: Omit<Habit, 'id' | 'user_id' | 'status' | 'created_at'>[]) => void;
   onNavigateToAccount: () => void;
+  onNavigateToDungeon: () => void;
 }
 
 const UpgradePrompt: React.FC<{onUpgradeClick: () => void}> = ({onUpgradeClick}) => (
@@ -28,10 +30,23 @@ const UpgradePrompt: React.FC<{onUpgradeClick: () => void}> = ({onUpgradeClick})
     </Card>
 );
 
-const Dashboard: React.FC<DashboardProps> = ({ playerProfile, habits, onUpdateHabit, onAddNewHabits, onNavigateToAccount }) => {
+const DungeonAlert: React.FC<{monsterCount: number, onEnterClick: () => void}> = ({monsterCount, onEnterClick}) => (
+    <Card className="bg-destructive/10 border-destructive/20 animate-pulse">
+        <CardHeader>
+            <CardTitle className="text-2xl text-destructive">Monsters in the Dungeon!</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <p className="text-muted-foreground mb-4">{monsterCount} of your failed quests from yesterday have turned into monsters. Defeat them to reclaim your honor (and get bonus loot)!</p>
+            <Button onClick={onEnterClick} variant="destructive">Enter the Dungeon</Button>
+        </CardContent>
+    </Card>
+)
+
+const Dashboard: React.FC<DashboardProps> = ({ playerProfile, habits, monsters, onUpdateHabit, onAddNewHabits, onNavigateToAccount, onNavigateToDungeon }) => {
   return (
     <main className="container mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
       <div className="lg:col-span-8 space-y-6">
+        {monsters.length > 0 && <DungeonAlert monsterCount={monsters.length} onEnterClick={onNavigateToDungeon} />}
         <HabitList habits={habits} onUpdateHabit={onUpdateHabit} />
         {playerProfile.subscription_tier === 'pro' ? (
             <HabitGenerator onAddHabits={onAddNewHabits} />

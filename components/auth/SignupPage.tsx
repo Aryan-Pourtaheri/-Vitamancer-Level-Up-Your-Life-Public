@@ -20,9 +20,10 @@ const GitHubIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 interface SignupPageProps {
   onNavigateToLogin: () => void;
+  onNavigateToLanding: () => void;
 }
 
-const SignupPage: React.FC<SignupPageProps> = ({ onNavigateToLogin }) => {
+const SignupPage: React.FC<SignupPageProps> = ({ onNavigateToLogin, onNavigateToLanding }) => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,12 +32,6 @@ const SignupPage: React.FC<SignupPageProps> = ({ onNavigateToLogin }) => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!isSupabaseConfigured) {
-      setError("Vitamancer is not configured for online play. Please contact the administrator.");
-      return;
-    }
-
     setLoading(true);
     setMessage('');
     setError('');
@@ -44,7 +39,12 @@ const SignupPage: React.FC<SignupPageProps> = ({ onNavigateToLogin }) => {
     try {
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
-      setMessage('Success! Check your email for a confirmation link.');
+      
+      if (isSupabaseConfigured) {
+        setMessage('Success! Check your email for a confirmation link.');
+      } else {
+        setMessage('Demo account created! You can now log in with these credentials.');
+      }
       setEmail('');
       setPassword('');
     } catch (err: any) {
@@ -55,10 +55,6 @@ const SignupPage: React.FC<SignupPageProps> = ({ onNavigateToLogin }) => {
   };
   
   const handleOAuthLogin = async (provider: 'google' | 'github') => {
-    if (!isSupabaseConfigured) {
-      setError("Vitamancer is not configured for online play. Please contact the administrator.");
-      return;
-    }
     setLoading(true);
     setError('');
     const { error } = await supabase.auth.signInWithOAuth({ provider });
@@ -69,7 +65,7 @@ const SignupPage: React.FC<SignupPageProps> = ({ onNavigateToLogin }) => {
   };
 
   return (
-    <AuthLayout title="Begin Your Adventure">
+    <AuthLayout title="Begin Your Adventure" onNavigateToLanding={onNavigateToLanding}>
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-2">
             <Button variant="outline" className="w-full flex items-center justify-center gap-2" onClick={() => handleOAuthLogin('google')} disabled={loading}>
