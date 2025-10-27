@@ -11,7 +11,8 @@ interface DashboardProps {
   habits: Habit[];
   onCompleteHabit: (habitId: string) => void;
   onUpdateHabit: (habitId: string, updates: Partial<Habit>) => void;
-  onAddNewHabits: (habits: Omit<Habit, 'id' | 'user_id' | 'completed'>[]) => void;
+  // FIX: Corrected the Omit type to match the parent component and the data source.
+  onAddNewHabits: (habits: Omit<Habit, 'id' | 'user_id' | 'completed' | 'created_at'>[]) => void;
   onSignOut: () => void;
 }
 

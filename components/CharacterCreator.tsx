@@ -166,7 +166,7 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
     
     return (
         <Modal open={isOpen} onOpenChange={onClose}>
-            <ModalContent className="max-w-7xl">
+            <ModalContent className="w-11/12 max-w-screen-2xl">
                 <ModalHeader>
                     <ModalTitle className="text-3xl font-mono font-bold text-center w-full">Forge Your Hero</ModalTitle>
                 </ModalHeader>
@@ -186,7 +186,7 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
                                 onChange={(e) => setName(e.target.value)}
                                 className="text-center text-lg h-12 font-mono"
                              />
-                            <div className="flex gap-2 w-full">
+                            <div className="flex gap-4 w-full">
                                 <Button variant="secondary" onClick={randomize} className="flex-1"><DiceIcon className="w-4 h-4 mr-2" /> Random</Button>
                                 <Button variant="secondary" onClick={reset} className="flex-1"><ResetIcon className="w-4 h-4 mr-2" /> Reset</Button>
                             </div>

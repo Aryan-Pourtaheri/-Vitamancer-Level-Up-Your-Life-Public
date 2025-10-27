@@ -1,18 +1,14 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Habit } from '../types';
 
-const API_KEY = process.env.API_KEY;
-
-if (!API_KEY) {
-  console.warn("API_KEY environment variable not set. AI features will be disabled.");
-}
-
-// Initialize with the key or an empty string to prevent the constructor from crashing.
-// The library will handle an invalid key, and we'll throw a user-friendly error below.
-const ai = new GoogleGenAI({ apiKey: API_KEY || "" });
+// Per guidelines, initialize with API_KEY from environment variables.
+// Assume `process.env.API_KEY` is pre-configured and valid.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const generateHabitSuggestions = async (goal: string): Promise<Omit<Habit, 'id' | 'user_id' | 'completed' | 'created_at'>[]> => {
-  if (!API_KEY) {
+  // Per guidelines, we can assume the API key is configured, but throwing a user-friendly
+  // error is better than letting the SDK throw a generic one if it's missing at runtime.
+  if (!process.env.API_KEY) {
     throw new Error("Vitamancer AI is not configured. Missing API Key.");
   }
   

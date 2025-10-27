@@ -215,7 +215,9 @@ const ThemedApp: React.FC = () => {
     }
   }, [isOffline]);
   
-  const handleAddNewHabits = async (newHabits: Omit<Habit, 'id' | 'user_id' | 'completed'>[]) => {
+  // FIX: Corrected the Omit type to exclude `created_at`, matching the type returned from the geminiService.
+  // This resolves a critical type mismatch that was causing Supabase client type inference to fail.
+  const handleAddNewHabits = async (newHabits: Omit<Habit, 'id' | 'user_id' | 'completed' | 'created_at'>[]) => {
     if (isOffline) {
       const habitsToAdd = newHabits.map((h, i) => ({
         ...h,

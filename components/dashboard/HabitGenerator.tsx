@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../Card';
 import { Input } from '../Input';
 
 interface HabitGeneratorProps {
-  onAddHabits: (habits: Omit<Habit, 'id' | 'user_id' | 'completed'>[]) => void;
+  // FIX: Corrected the Omit type to match the parent component, ensuring type safety.
+  onAddHabits: (habits: Omit<Habit, 'id' | 'user_id' | 'completed' | 'created_at'>[]) => void;
 }
 
 const HabitGenerator: React.FC<HabitGeneratorProps> = ({ onAddHabits }) => {
