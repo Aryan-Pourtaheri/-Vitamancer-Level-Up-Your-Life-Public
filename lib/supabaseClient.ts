@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { PlayerProfile, Habit } from '../types';
+// FIX: Using `import type` and importing all nested types to ensure the Database interface can be fully resolved.
+import type { PlayerProfile, Habit, AvatarOptions, Stats, Item } from '../types';
 
 // IMPORTANT: These values must be provided via environment variables.
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -19,19 +20,63 @@ if (!isSupabaseConfigured) {
 
 // We pass placeholders if not configured to prevent `createClient` from throwing an error.
 // The application logic in App.tsx will gate functionality based on `isSupabaseConfigured`.
-// FIX: Moved Database interface before createClient to ensure Supabase client is typed correctly.
-interface Database {
+// FIX: Replaced Omit/Partial with explicit types to resolve a Supabase client type inference issue.
+// The TypeScript compiler was failing to resolve the nested generic types, causing all supabase calls to be typed as `never`.
+export interface Database {
   public: {
     Tables: {
       profiles: {
         Row: PlayerProfile;
-        Insert: Omit<PlayerProfile, 'created_at'>;
-        Update: Partial<PlayerProfile>;
+        Insert: {
+          id: string;
+          name: string;
+          level: number;
+          xp: number;
+          hp: number;
+          maxHp: number;
+          mp: number;
+          maxMp: number;
+          gold: number;
+          characterClass: string;
+          avatar_options: AvatarOptions;
+          stats: Stats;
+          inventory: Item[];
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          level?: number;
+          xp?: number;
+          hp?: number;
+          maxHp?: number;
+          mp?: number;
+          maxMp?: number;
+          gold?: number;
+          characterClass?: string;
+          avatar_options?: AvatarOptions;
+          stats?: Stats;
+          inventory?: Item[];
+          created_at?: string;
+        };
       };
       habits: {
         Row: Habit;
-        Insert: Omit<Habit, 'id' | 'created_at'>;
-        Update: Partial<Habit>;
+        Insert: {
+          user_id: string;
+          text: string;
+          difficulty: 'easy' | 'medium' | 'hard';
+          completed: boolean;
+          notes?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          text?: string;
+          difficulty?: 'easy' | 'medium' | 'hard';
+          completed?: boolean;
+          notes?: string | null;
+          created_at?: string;
+        };
       };
     };
     Views: {

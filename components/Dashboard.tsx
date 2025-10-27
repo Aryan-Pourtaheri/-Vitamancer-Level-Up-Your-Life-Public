@@ -5,6 +5,7 @@ import Header from './dashboard/Header';
 import HabitList from './dashboard/HabitList';
 import StatsPanel from './dashboard/StatsPanel';
 import HabitGenerator from './dashboard/HabitGenerator';
+import Calendar from './dashboard/Calendar';
 
 interface DashboardProps {
   playerProfile: PlayerProfile;
@@ -25,8 +26,9 @@ const Dashboard: React.FC<DashboardProps> = ({ playerProfile, habits, onComplete
           <HabitList habits={habits} onCompleteHabit={onCompleteHabit} onUpdateHabit={onUpdateHabit} />
           <HabitGenerator onAddHabits={onAddNewHabits} />
         </div>
-        <aside className="lg:col-span-4">
+        <aside className="lg:col-span-4 space-y-6">
           <StatsPanel playerProfile={playerProfile} />
+          <Calendar habits={habits} />
         </aside>
       </main>
     </div>
