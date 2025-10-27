@@ -1,4 +1,5 @@
 
+
 import { createClient, Session, User } from '@supabase/supabase-js';
 // FIX: Using `import type` for Row types, as Insert/Update types are now inlined.
 import type { PlayerProfile, Habit, Monster } from '../types';
@@ -164,6 +165,9 @@ export interface Database {
           gold: number;
           characterClass: string;
           subscription_tier: string;
+          specialization: string | null;
+          skill_points: number;
+          skills: string[];
           avatar_options: {
             skinColor: string;
             hairColor: string;
@@ -201,6 +205,9 @@ export interface Database {
           subscription_tier?: string;
           pro_features_unlocked_at?: string | null;
           last_monster_generation_at?: string | null;
+          specialization?: string | null;
+          skill_points?: number;
+          skills?: string[];
           avatar_options?: {
             skinColor: string;
             hairColor: string;

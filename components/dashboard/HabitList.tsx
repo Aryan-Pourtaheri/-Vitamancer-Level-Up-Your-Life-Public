@@ -1,14 +1,33 @@
 
+
 import React, { useState } from 'react';
 import { Habit } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle } from '../Card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 import Button from '../PixelButton';
+import EditHabitModal from './EditHabitModal';
+
+const EditIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+      <path d="m15 5 4 4"/>
+    </svg>
+);
+  
+const TrashIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 6h18"/>
+      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+    </svg>
+);
 
 interface HabitRowProps {
   habit: Habit;
   onUpdate: (id: string, updates: Partial<Habit>) => void;
+  onDelete: (id: string) => void;
+  onEdit: (habit: Habit) => void;
 }
 
 const FileTextIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -22,7 +41,7 @@ const FileTextIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 
-const HabitRow: React.FC<HabitRowProps> = React.memo(({ habit, onUpdate }) => {
+const HabitRow: React.FC<HabitRowProps> = React.memo(({ habit, onUpdate, onDelete, onEdit }) => {
     const [isNotesOpen, setIsNotesOpen] = useState(false);
     const [notes, setNotes] = useState(habit.notes || '');
 
@@ -61,20 +80,25 @@ const HabitRow: React.FC<HabitRowProps> = React.memo(({ habit, onUpdate }) => {
                     <input 
                         type="checkbox" 
                         checked={habit.status === 'completed'}
-                        onChange={() => onUpdate(habit.id, { status: 'completed' })}
-                        disabled={habit.status === 'completed'}
-                        className="w-5 h-5 mr-4 cursor-pointer disabled:cursor-not-allowed accent-green-500"
+                        onChange={() => onUpdate(habit.id, { status: habit.status === 'completed' ? 'not_started' : 'completed' })}
+                        className="w-5 h-5 mr-4 cursor-pointer accent-green-500"
                     />
                     <span className={`transition-colors ${habit.status === 'completed' ? 'line-through text-muted-foreground' : ''}`}>{habit.text}</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-0.5">
                     {habit.status !== 'completed' && (
-                        <div className="text-right text-sm flex-shrink-0">
+                        <div className="text-right text-sm flex-shrink-0 mr-2">
                             <span className="font-bold text-green-400">+{xpAmount[habit.difficulty]} XP</span>
                         </div>
                     )}
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsNotesOpen(p => !p)}>
                        <FileTextIcon className={cn("w-4 h-4 text-muted-foreground", habit.notes && 'fill-muted-foreground/20')} />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(habit)}>
+                        <EditIcon className="w-4 h-4 text-muted-foreground" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 group hover:bg-destructive/10" onClick={() => { if (window.confirm('Are you sure you want to delete this quest? This will also remove any monster linked to it and cannot be undone.')) onDelete(habit.id); }}>
+                        <TrashIcon className="w-4 h-4 text-muted-foreground group-hover:text-destructive" />
                     </Button>
                 </div>
             </div>
@@ -107,26 +131,45 @@ const HabitRow: React.FC<HabitRowProps> = React.memo(({ habit, onUpdate }) => {
 interface HabitListProps {
   habits: Habit[];
   onUpdateHabit: (id: string, updates: Partial<Habit>) => void;
+  onDeleteHabit: (id: string) => void;
 }
 
-const HabitList: React.FC<HabitListProps> = ({ habits, onUpdateHabit }) => {
+const HabitList: React.FC<HabitListProps> = ({ habits, onUpdateHabit, onDeleteHabit }) => {
+  const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+
+  const handleSaveEdit = (updates: Partial<Habit>) => {
+      if (!editingHabit) return;
+      onUpdateHabit(editingHabit.id, updates);
+      setEditingHabit(null);
+  };
+
   return (
-    <Card className="bg-card/80 backdrop-blur-sm">
-      <CardHeader>
-        <CardTitle className="text-2xl">Daily Quests</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {habits.length > 0 ? (
-            habits.map(habit => (
-              <HabitRow key={habit.id} habit={habit} onUpdate={onUpdateHabit} />
-            ))
-          ) : (
-            <p className="text-muted-foreground py-4 text-center">No habits yet. Use the AI generator to create some new quests!</p>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+    <>
+      <Card className="bg-card/80 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="text-2xl">Daily Quests</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {habits.length > 0 ? (
+              habits.map(habit => (
+                <HabitRow key={habit.id} habit={habit} onUpdate={onUpdateHabit} onDelete={onDeleteHabit} onEdit={setEditingHabit} />
+              ))
+            ) : (
+              <p className="text-muted-foreground py-4 text-center">No habits yet. Add a new quest or use the AI generator to create some!</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+      {editingHabit && (
+          <EditHabitModal
+              habit={editingHabit}
+              isOpen={!!editingHabit}
+              onClose={() => setEditingHabit(null)}
+              onSave={handleSaveEdit}
+          />
+      )}
+    </>
   );
 };
 

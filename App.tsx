@@ -1,13 +1,15 @@
 
 
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
 import BoardPage from './components/BoardPage';
-import { PlayerProfile, Habit, AvatarOptions, Stats, Monster } from './types';
-import { xpForLevel, createInitialPlayerProfile } from './constants';
+import { PlayerProfile, Habit, AvatarOptions, Stats, Monster, Specialization, Skill } from './types';
+import { xpForLevel, createInitialPlayerProfile, SPECIALIZATIONS } from './constants';
 import LevelUpModal from './components/LevelUpModal';
 import CharacterCreator from './components/CharacterCreator';
 import { ThemeProvider } from './components/ThemeProvider';
@@ -17,6 +19,8 @@ import SignupPage from './components/auth/SignupPage';
 import AccountPage from './components/AccountPage';
 import DungeonPage from './components/DungeonPage';
 import { generateMonsterFromHabit } from './services/geminiService';
+import SpecializationModal from './components/SpecializationModal';
+import SkillTreePage from './components/SkillTreePage';
 
 const ThemedApp: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -24,11 +28,12 @@ const ThemedApp: React.FC = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [monsters, setMonsters] = useState<Monster[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<'dashboard' | 'board' | 'account' | 'dungeon'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'board' | 'account' | 'dungeon' | 'skills'>('dashboard');
   
   const [authView, setAuthView] = useState<'landing' | 'login' | 'signup'>('landing');
   const [needsProfile, setNeedsProfile] = useState(false);
   const [isLevelUpModalOpen, setIsLevelUpModalOpen] = useState(false);
+  const [isSpecializationModalOpen, setIsSpecializationModalOpen] = useState(false);
   const [levelUpInfo, setLevelUpInfo] = useState<{ oldLevel: number; newLevel: number } | null>(null);
 
   useEffect(() => {
@@ -147,40 +152,76 @@ const ThemedApp: React.FC = () => {
 
     const newXp = profile.xp + amount;
     let newLevel = profile.level;
-    let xpToNextLevel = xpForLevel(newLevel);
     let didLevelUp = false;
-    let statGains = { maxHp: 0, maxMp: 0, str: 0, int: 0, def: 0, spd: 0 };
+    let levelsGained = 0;
+    
+    let statChanges: Stats = { str: 0, int: 0, def: 0, spd: 0 };
+    let maxHpChange = 0;
+    let maxMpChange = 0;
 
-    while (newXp >= xpToNextLevel) {
-      statGains = { maxHp: 10, maxMp: 5, str: 1, int: 1, def: 1, spd: 1 };
-      newLevel++;
-      xpToNextLevel = xpForLevel(newLevel);
-      didLevelUp = true;
+    if (amount > 0) {
+      // Level Up Logic
+      let xpToNextLevel = xpForLevel(newLevel);
+      while (newXp >= xpToNextLevel) {
+        const gains = { maxHp: 10, maxMp: 5, str: 1, int: 1, def: 1, spd: 1 };
+        maxHpChange += gains.maxHp;
+        maxMpChange += gains.maxMp;
+        statChanges.str += gains.str;
+        statChanges.int += gains.int;
+        statChanges.def += gains.def;
+        statChanges.spd += gains.spd;
+        newLevel++;
+        levelsGained++;
+        xpToNextLevel = xpForLevel(newLevel);
+        didLevelUp = true;
+      }
+    } else if (amount < 0) {
+      // De-Level Logic
+      let xpForCurrentLevel = xpForLevel(newLevel - 1);
+      while (newLevel > 1 && newXp < xpForCurrentLevel) {
+        const losses = { maxHp: 10, maxMp: 5, str: 1, int: 1, def: 1, spd: 1 };
+        maxHpChange -= losses.maxHp;
+        maxMpChange -= losses.maxMp;
+        statChanges.str -= losses.str;
+        statChanges.int -= losses.int;
+        statChanges.def -= losses.def;
+        statChanges.spd -= losses.spd;
+        newLevel--;
+        levelsGained--; // Negative levels gained
+        xpForCurrentLevel = xpForLevel(newLevel - 1);
+      }
     }
     
-    const updatedProfileData = {
-      ...profile,
-      xp: newXp,
+    const newMaxHp = profile.maxHp + maxHpChange;
+    const newMaxMp = profile.maxMp + maxMpChange;
+    
+    const updatedProfilePayload = {
+      xp: Math.max(0, newXp),
       level: newLevel,
-      maxHp: profile.maxHp + statGains.maxHp,
-      hp: profile.maxHp + statGains.maxHp,
-      maxMp: profile.maxMp + statGains.maxMp,
-      mp: profile.maxMp + statGains.maxMp,
+      skill_points: profile.skill_points + levelsGained,
+      maxHp: Math.max(1, newMaxHp),
+      hp: didLevelUp ? newMaxHp : Math.min(profile.hp, newMaxHp), // Heal on level up
+      maxMp: Math.max(0, newMaxMp),
+      mp: didLevelUp ? newMaxMp : Math.min(profile.mp, newMaxMp), // Restore MP on level up
       stats: {
-        str: profile.stats.str + statGains.str,
-        int: profile.stats.int + statGains.int,
-        def: profile.stats.def + statGains.def,
-        spd: profile.stats.spd + statGains.spd,
+        str: Math.max(1, profile.stats.str + statChanges.str),
+        int: Math.max(1, profile.stats.int + statChanges.int),
+        def: Math.max(1, profile.stats.def + statChanges.def),
+        spd: Math.max(1, profile.stats.spd + statChanges.spd),
       }
     };
     
-    setProfile(updatedProfileData);
+    setProfile(p => p ? { ...p, ...updatedProfilePayload } : null);
+
     if (didLevelUp) {
       setLevelUpInfo({ oldLevel: profile.level, newLevel: newLevel });
       setIsLevelUpModalOpen(true);
+      if (newLevel >= 5 && !profile.specialization) {
+        setIsSpecializationModalOpen(true);
+      }
     }
 
-    const { error } = await supabase.from('profiles').update(updatedProfileData).eq('id', profile.id);
+    const { error } = await supabase.from('profiles').update(updatedProfilePayload).eq('id', profile.id);
     if (error) console.error("Failed to update profile XP", error);
   }, [profile]);
   
@@ -188,14 +229,12 @@ const ThemedApp: React.FC = () => {
     const oldHabit = habits.find(h => h.id === habitId);
     if (!oldHabit) return;
 
+    let xpChange = 0;
+    const difficultyMap = { easy: 10, medium: 25, hard: 50 };
+
+    // Gaining XP: Moving to 'completed' from any other state
     if (updates.status === 'completed' && oldHabit.status !== 'completed') {
-        let xpGained = 0;
-        switch (oldHabit.difficulty) {
-            case 'easy': xpGained = 10; break;
-            case 'medium': xpGained = 25; break;
-            case 'hard': xpGained = 50; break;
-        }
-        if (xpGained > 0) gainXP(xpGained);
+        xpChange = difficultyMap[oldHabit.difficulty];
 
         // Monster defeat logic
         const monsterToDefeat = monsters.find(m => m.linked_habit_id === habitId);
@@ -204,13 +243,20 @@ const ThemedApp: React.FC = () => {
             const bonusGold = 5;
             setProfile(p => p ? ({ ...p, gold: p.gold + bonusGold }) : null);
 
-            // Update DB
             await supabase.from('monsters').delete().eq('id', monsterToDefeat.id);
             if (profile) await supabase.from('profiles').update({ gold: profile.gold + bonusGold }).eq('id', profile.id);
 
-            // TODO: Add a nice toast/notification for monster defeat!
             console.log(`Monster ${monsterToDefeat.name} defeated! +${bonusGold} gold.`);
         }
+    }
+    
+    // Losing XP: Moving from 'completed' to any other state
+    if (oldHabit.status === 'completed' && (updates.status === 'not_started' || updates.status === 'in_progress')) {
+        xpChange = -difficultyMap[oldHabit.difficulty];
+    }
+    
+    if (xpChange !== 0) {
+        gainXP(xpChange);
     }
 
     const updatedHabits = habits.map(h => h.id === habitId ? { ...h, ...updates } : h);
@@ -240,6 +286,47 @@ const ThemedApp: React.FC = () => {
       setHabits(prev => [...prev, ...insertedHabits]);
     }
   };
+
+  const handleAddNewHabit = async (newHabit: Omit<Habit, 'id' | 'user_id' | 'status' | 'created_at'>) => {
+    const userId = session?.user?.id;
+    if (!userId) {
+      console.error("Attempted to add a habit without a user session.");
+      return;
+    }
+
+    const habitToInsert = { ...newHabit, user_id: userId, status: 'not_started' as const };
+    
+    const { data: insertedHabit, error } = await supabase
+      .from('habits')
+      .insert(habitToInsert)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Failed to add new habit", error);
+    } else if (insertedHabit) {
+      setHabits(prev => [...prev, insertedHabit]);
+    }
+  };
+  
+  const handleDeleteHabit = async (habitId: string) => {
+    // The DB is set to cascade deletes, so the linked monster will be deleted automatically.
+    // We just need to update the local state to match.
+    const monsterLinked = monsters.find(m => m.linked_habit_id === habitId);
+    
+    // Optimistically update UI
+    setHabits(prev => prev.filter(h => h.id !== habitId));
+    if (monsterLinked) {
+      setMonsters(prev => prev.filter(m => m.id !== monsterLinked.id));
+    }
+
+    const { error } = await supabase.from('habits').delete().eq('id', habitId);
+    if (error) {
+      console.error("Failed to delete habit", error);
+      // On failure, refetch all user data to revert UI changes and stay in sync.
+      if(session?.user) fetchUserData(session.user);
+    }
+  };
   
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -258,6 +345,63 @@ const ThemedApp: React.FC = () => {
     } else if (data) {
       setProfile(data as PlayerProfile);
       setNeedsProfile(false);
+    }
+  };
+
+  const handleSetSpecialization = async (spec: Specialization) => {
+    if (!profile) return;
+    
+    const updatedStats = { ...profile.stats };
+    Object.entries(spec.statBonus).forEach(([stat, bonus]) => {
+        updatedStats[stat as keyof Stats] += bonus;
+    });
+
+    const updatedProfile = { ...profile, specialization: spec.name, stats: updatedStats };
+    setProfile(updatedProfile);
+    setIsSpecializationModalOpen(false);
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({ specialization: spec.name, stats: updatedStats })
+        .eq('id', profile.id);
+
+    if (error) {
+        console.error("Failed to update specialization", error);
+        // Revert on error
+        setProfile(profile);
+    }
+  };
+
+  const handleUnlockSkill = async (skill: Skill) => {
+    if (!profile || profile.skill_points < skill.cost) return;
+    
+    // Check dependencies
+    const hasDependencies = skill.dependencies?.every(depId => profile.skills.includes(depId)) ?? true;
+    if (!hasDependencies) {
+        console.error("Cannot unlock skill: dependencies not met.");
+        return;
+    }
+
+    const updatedStats = { ...profile.stats };
+    if (skill.statBonus) {
+        Object.entries(skill.statBonus).forEach(([stat, bonus]) => {
+            if (bonus) updatedStats[stat as keyof Stats] += bonus;
+        });
+    }
+
+    const updatedProfilePayload = {
+        skill_points: profile.skill_points - skill.cost,
+        skills: [...profile.skills, skill.id],
+        stats: updatedStats
+    };
+
+    setProfile(p => p ? { ...p, ...updatedProfilePayload } : null);
+
+    const { error } = await supabase.from('profiles').update(updatedProfilePayload).eq('id', profile.id);
+    if (error) {
+        console.error("Failed to unlock skill", error);
+        // Revert on error
+        setProfile(profile);
     }
   };
 
@@ -292,6 +436,7 @@ const ThemedApp: React.FC = () => {
     }
     
     if (profile) {
+      const specializationChoices = SPECIALIZATIONS.filter(s => s.baseClass === profile.characterClass);
       return (
         <>
           <Layout
@@ -301,21 +446,25 @@ const ThemedApp: React.FC = () => {
             onNavigateToDashboard={() => setActiveView('dashboard')}
             onNavigateToAccount={() => setActiveView('account')}
             onNavigateToDungeon={() => setActiveView('dungeon')}
+            onNavigateToSkills={() => setActiveView('skills')}
             activeView={activeView}
             dungeonAlert={monsters.length > 0}
           >
-            {activeView === 'dashboard' && <Dashboard playerProfile={profile} habits={habits} onUpdateHabit={handleUpdateHabit} onAddNewHabits={handleAddNewHabits} onNavigateToAccount={() => setActiveView('account')} onNavigateToDungeon={() => setActiveView('dungeon')} monsters={monsters} />}
+            {activeView === 'dashboard' && <Dashboard playerProfile={profile} habits={habits} onUpdateHabit={handleUpdateHabit} onAddNewHabits={handleAddNewHabits} onNavigateToAccount={() => setActiveView('account')} onNavigateToDungeon={() => setActiveView('dungeon')} monsters={monsters} onAddNewHabit={handleAddNewHabit} onDeleteHabit={handleDeleteHabit} onNavigateToSkills={() => setActiveView('skills')} />}
             {activeView === 'board' && <BoardPage habits={habits} onUpdateHabit={handleUpdateHabit} />}
             {activeView === 'account' && <AccountPage playerProfile={profile} onUpgrade={handleUpgrade} />}
             {activeView === 'dungeon' && <DungeonPage monsters={monsters} habits={habits} onUpdateHabit={handleUpdateHabit} />}
+            {activeView === 'skills' && <SkillTreePage playerProfile={profile} onUnlockSkill={handleUnlockSkill} />}
           </Layout>
           {isLevelUpModalOpen && levelUpInfo && <LevelUpModal level={levelUpInfo.newLevel} onClose={() => setIsLevelUpModalOpen(false)} />}
+          {isSpecializationModalOpen && <SpecializationModal choices={specializationChoices} onSelect={handleSetSpecialization} />}
         </>
       );
     }
 
     if (needsProfile) {
-      return <CharacterCreator isOpen={true} onClose={() => setNeedsProfile(false)} onCreateProfile={handleCreateProfile} />;
+      const initialName = session?.user?.user_metadata?.display_name || '';
+      return <CharacterCreator isOpen={true} onClose={() => setNeedsProfile(false)} onCreateProfile={handleCreateProfile} initialName={initialName} />;
     }
     
     return renderUnauthenticatedOnline();

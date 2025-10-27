@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { PlayerProfile } from '../types';
 import Header from './dashboard/Header';
@@ -10,7 +11,8 @@ interface LayoutProps {
   onNavigateToDashboard: () => void;
   onNavigateToAccount: () => void;
   onNavigateToDungeon: () => void;
-  activeView: 'dashboard' | 'board' | 'account' | 'dungeon';
+  onNavigateToSkills: () => void;
+  activeView: 'dashboard' | 'board' | 'account' | 'dungeon' | 'skills';
   dungeonAlert: boolean;
   children: React.ReactNode;
 }
@@ -22,6 +24,7 @@ const Layout: React.FC<LayoutProps> = ({
   onNavigateToDashboard, 
   onNavigateToAccount,
   onNavigateToDungeon,
+  onNavigateToSkills,
   activeView, 
   dungeonAlert,
   children 
@@ -35,6 +38,7 @@ const Layout: React.FC<LayoutProps> = ({
         onNavigateToDashboard={onNavigateToDashboard}
         onNavigateToAccount={onNavigateToAccount}
         onNavigateToDungeon={onNavigateToDungeon}
+        onNavigateToSkills={onNavigateToSkills}
         activeView={activeView}
         dungeonAlert={dungeonAlert}
       />

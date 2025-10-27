@@ -1,9 +1,10 @@
 
-import { PlayerProfile, CharacterClass, AvatarOptions, Stats } from './types';
+
+import { PlayerProfile, CharacterClass, AvatarOptions, Stats, Specialization, Skill } from './types';
 
 export const xpForLevel = (lvl: number): number => Math.floor(100 * Math.pow(lvl, 1.5));
 
-export const createInitialPlayerProfile = (userId: string, characterClass: string, name: string, avatarOptions: AvatarOptions, stats: Stats): Omit<PlayerProfile, 'created_at' | 'pro_features_unlocked_at'> => {
+export const createInitialPlayerProfile = (userId: string, characterClass: string, name: string, avatarOptions: AvatarOptions, stats: Stats): Omit<PlayerProfile, 'created_at' | 'pro_features_unlocked_at' | 'last_monster_generation_at'> => {
   return {
     id: userId,
     name: name,
@@ -19,6 +20,9 @@ export const createInitialPlayerProfile = (userId: string, characterClass: strin
     stats: stats,
     inventory: [{ id: 'potion1', name: 'Health Potion', description: 'Restores 50 HP.' }],
     subscription_tier: 'free',
+    specialization: null,
+    skill_points: 0,
+    skills: [],
   };
 };
 
@@ -60,3 +64,44 @@ export const CHARACTER_CLASSES: CharacterClass[] = [
     baseStats: { str: 9, int: 7, def: 11, spd: 3 },
   },
 ];
+
+
+export const SPECIALIZATIONS: Specialization[] = [
+    // Warrior Paths
+    { name: 'Berserker', description: 'Embrace rage for overwhelming power.', baseClass: 'Warrior', statBonus: { str: 3, spd: 1 } },
+    { name: 'Guardian', description: 'An unbreakable shield for the party.', baseClass: 'Warrior', statBonus: { def: 3, str: 1 } },
+    // Mage Paths
+    { name: 'Elementalist', description: 'Command the raw forces of nature.', baseClass: 'Mage', statBonus: { int: 3, spd: 1 } },
+    { name: 'Enchanter', description: 'Weave intricate spells to bolster allies.', baseClass: 'Mage', statBonus: { int: 2, def: 2 } },
+    // Rogue Paths
+    { name: 'Assassin', description: 'A master of silent, deadly strikes.', baseClass: 'Rogue', statBonus: { spd: 3, str: 1 } },
+    { name: 'Trickster', description: 'Outsmart and outmaneuver any foe.', baseClass: 'Rogue', statBonus: { spd: 2, int: 2 } },
+    // Cleric Paths
+    { name: 'Priest', description: 'A beacon of pure healing light.', baseClass: 'Cleric', statBonus: { int: 3, def: 1 } },
+    { name: 'Inquisitor', description: 'Purge the wicked with holy fire.', baseClass: 'Cleric', statBonus: { int: 2, str: 2 } },
+    // Archer Paths
+    { name: 'Sharpshooter', description: 'Land impossible shots from any distance.', baseClass: 'Archer', statBonus: { spd: 3, str: 1 } },
+    { name: 'Ranger', description: 'A survivalist who is one with the wild.', baseClass: 'Archer', statBonus: { spd: 2, def: 2 } },
+    // Paladin Paths
+    { name: 'Crusader', description: 'A relentless champion of their divine cause.', baseClass: 'Paladin', statBonus: { str: 3, def: 1 } },
+    { name: 'Vanguard', description: 'Lead the charge and protect the front line.', baseClass: 'Paladin', statBonus: { def: 3, int: 1 } },
+];
+
+export const SKILL_TREES: Record<string, Skill[]> = {
+    'Berserker': [
+        { id: 'ber_s1', name: 'Rampage', description: 'Your inner fury manifests as raw power.', cost: 1, statBonus: { str: 2 } },
+        { id: 'ber_s2', name: 'Adrenaline Rush', description: 'Move with surprising quickness in the heat of battle.', cost: 1, statBonus: { spd: 2 } },
+        { id: 'ber_s3', name: 'Brutal Strength', description: 'Hone your might to a razor edge.', cost: 2, statBonus: { str: 5 }, dependencies: ['ber_s1'] },
+        { id: 'ber_s4', name: 'Tireless Assault', description: 'You never seem to run out of stamina.', cost: 3, statBonus: { spd: 3, str: 2 }, dependencies: ['ber_s2', 'ber_s3'] },
+    ],
+    'Guardian': [
+        { id: 'gua_s1', name: 'Iron Wall', description: 'Your defensive stance is nearly unbreakable.', cost: 1, statBonus: { def: 2 } },
+        { id: 'gua_s2', name: 'Vigor', description: 'You can endure more punishment than most.', cost: 1, statBonus: { str: 1, def: 1 } },
+        { id: 'gua_s3', name: 'Unmovable Object', description: 'Become a true bastion of defense.', cost: 2, statBonus: { def: 5 }, dependencies: ['gua_s1'] },
+        { id: 'gua_s4', name: 'Retaliate', description: 'For every blow you receive, you return one with interest.', cost: 3, statBonus: { str: 3, def: 2 }, dependencies: ['gua_s2', 'gua_s3'] },
+    ],
+    // Empty trees for other classes for now
+    'Elementalist': [], 'Enchanter': [], 'Assassin': [], 'Trickster': [],
+    'Priest': [], 'Inquisitor': [], 'Sharpshooter': [], 'Ranger': [],
+    'Crusader': [], 'Vanguard': [],
+};

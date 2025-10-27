@@ -1,4 +1,5 @@
 
+
 export interface Stats {
   str: number;
   int: number;
@@ -29,6 +30,9 @@ export interface PlayerProfile {
   maxMp: number;
   gold: number;
   characterClass: string;
+  specialization: string | null;
+  skill_points: number;
+  skills: string[]; // Array of unlocked skill IDs
   avatar_options: AvatarOptions;
   stats: Stats;
   inventory: Item[];
@@ -70,4 +74,20 @@ export interface CharacterClass {
   description: string;
   avatar: AvatarOptions;
   baseStats: Stats;
+}
+
+export interface Specialization {
+    name: string;
+    description: string;
+    baseClass: string;
+    statBonus: Partial<Stats>;
+}
+
+export interface Skill {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  statBonus?: Partial<Stats>;
+  dependencies?: string[];
 }

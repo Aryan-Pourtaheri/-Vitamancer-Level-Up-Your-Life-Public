@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { PlayerProfile, Habit, Monster } from '../types';
 import HabitList from './dashboard/HabitList';
@@ -7,6 +8,7 @@ import HabitGenerator from './dashboard/HabitGenerator';
 import Calendar from './dashboard/Calendar';
 import Button from './PixelButton';
 import { Card, CardContent, CardHeader, CardTitle } from './Card';
+import AddHabitForm from './dashboard/AddHabitForm';
 
 interface DashboardProps {
   playerProfile: PlayerProfile;
@@ -14,8 +16,11 @@ interface DashboardProps {
   monsters: Monster[];
   onUpdateHabit: (habitId: string, updates: Partial<Habit>) => void;
   onAddNewHabits: (habits: Omit<Habit, 'id' | 'user_id' | 'status' | 'created_at'>[]) => void;
+  onAddNewHabit: (habit: Omit<Habit, 'id' | 'user_id' | 'status' | 'created_at'>) => void;
+  onDeleteHabit: (habitId: string) => void;
   onNavigateToAccount: () => void;
   onNavigateToDungeon: () => void;
+  onNavigateToSkills: () => void;
 }
 
 const UpgradePrompt: React.FC<{onUpgradeClick: () => void}> = ({onUpgradeClick}) => (
@@ -42,12 +47,13 @@ const DungeonAlert: React.FC<{monsterCount: number, onEnterClick: () => void}> =
     </Card>
 )
 
-const Dashboard: React.FC<DashboardProps> = ({ playerProfile, habits, monsters, onUpdateHabit, onAddNewHabits, onNavigateToAccount, onNavigateToDungeon }) => {
+const Dashboard: React.FC<DashboardProps> = ({ playerProfile, habits, monsters, onUpdateHabit, onAddNewHabits, onAddNewHabit, onDeleteHabit, onNavigateToAccount, onNavigateToDungeon, onNavigateToSkills }) => {
   return (
     <main className="container mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
       <div className="lg:col-span-8 space-y-6">
         {monsters.length > 0 && <DungeonAlert monsterCount={monsters.length} onEnterClick={onNavigateToDungeon} />}
-        <HabitList habits={habits} onUpdateHabit={onUpdateHabit} />
+        <HabitList habits={habits} onUpdateHabit={onUpdateHabit} onDeleteHabit={onDeleteHabit} />
+        <AddHabitForm onAddHabit={onAddNewHabit} />
         {playerProfile.subscription_tier === 'pro' ? (
             <HabitGenerator onAddHabits={onAddNewHabits} />
         ) : (
@@ -55,7 +61,7 @@ const Dashboard: React.FC<DashboardProps> = ({ playerProfile, habits, monsters, 
         )}
       </div>
       <aside className="lg:col-span-4 space-y-6">
-        <StatsPanel playerProfile={playerProfile} />
+        <StatsPanel playerProfile={playerProfile} onNavigateToSkills={onNavigateToSkills} />
         <Calendar habits={habits} />
       </aside>
     </main>

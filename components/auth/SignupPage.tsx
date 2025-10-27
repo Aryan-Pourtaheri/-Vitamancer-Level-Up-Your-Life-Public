@@ -25,6 +25,7 @@ interface SignupPageProps {
 
 const SignupPage: React.FC<SignupPageProps> = ({ onNavigateToLogin, onNavigateToLanding }) => {
   const [loading, setLoading] = useState(false);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -37,16 +38,33 @@ const SignupPage: React.FC<SignupPageProps> = ({ onNavigateToLogin, onNavigateTo
     setError('');
 
     try {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+            data: {
+                display_name: name,
+            }
+        }
+      });
       if (error) throw error;
       
-      if (isSupabaseConfigured) {
-        setMessage('Success! Check your email for a confirmation link.');
+      const { user } = data;
+      // Heuristic to check if the user object returned is for an existing user.
+      // Supabase signUp returns a user object even if the email is taken, but the created_at timestamp will be old.
+      if (user && (new Date().getTime() - new Date(user.created_at).getTime()) > 60000) {
+        setError('An account with this email already exists. Please try logging in instead.');
       } else {
-        setMessage('Demo account created! You can now log in with these credentials.');
+        if (isSupabaseConfigured) {
+          setMessage('Success! Check your email for a confirmation link.');
+        } else {
+          setMessage('Demo account created! You can now log in with these credentials.');
+        }
+        setEmail('');
+        setPassword('');
+        setName('');
       }
-      setEmail('');
-      setPassword('');
+
     } catch (err: any) {
       setError(err.error_description || err.message);
     } finally {
@@ -92,6 +110,14 @@ const SignupPage: React.FC<SignupPageProps> = ({ onNavigateToLogin, onNavigateTo
         <form onSubmit={handleSignup} className="space-y-4">
           <div className="space-y-2">
             <Input
+              type="text"
+              placeholder="Hero's Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={loading}
+              required
+            />
+            <Input
               type="email"
               placeholder="Email"
               value={email}
@@ -111,7 +137,7 @@ const SignupPage: React.FC<SignupPageProps> = ({ onNavigateToLogin, onNavigateTo
           {message && <p className="text-sm text-center text-green-400">{message}</p>}
           {error && <p className="text-sm text-center text-destructive">{error}</p>}
 
-          <Button type="submit" className="w-full" disabled={loading || !email || !password}>
+          <Button type="submit" className="w-full" disabled={loading || !email || !password || !name}>
             {loading ? 'Creating Account...' : 'Sign Up'}
           </Button>
         </form>

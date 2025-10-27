@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { PlayerProfile } from '../../types';
 import { xpForLevel } from '../../constants';
@@ -40,6 +41,10 @@ const SwordsIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 21-5-5-6 6"/><path d="m21 15-5-5-6 6"/><path d="M3.5 14.5 10 8"/><path d="M9.5 3.5 16 10"/></svg>
 );
 
+const BrainCircuitIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5V3M9 6.8a1 1 0 1 1-1.4-1.4M15 6.8a1 1 0 1 0-1.4-1.4M5.5 10a1 1 0 1 0-2 0M18.5 10a1 1 0 1 1 2 0M12 10a2 2 0 1 0 4 0M8 10a2 2 0 1 1-4 0M12 18v2M9.4 15.5a1 1 0 1 0 1.4 1.4M15 17.2a1 1 0 1 1-1.4-1.4M14 12a2 2 0 1 0 0 4M10 12a2 2 0 1 1 0 4"/></svg>
+);
+
 const StatDisplay: React.FC<{ icon: React.ReactNode; value: number | string; }> = ({ icon, value }) => (
     <div className="flex items-center space-x-1.5 text-sm bg-secondary/50 px-2 py-1 rounded-md">
         {icon}
@@ -55,11 +60,12 @@ interface HeaderProps {
   onNavigateToDashboard: () => void;
   onNavigateToAccount: () => void;
   onNavigateToDungeon: () => void;
-  activeView: 'dashboard' | 'board' | 'account' | 'dungeon';
+  onNavigateToSkills: () => void;
+  activeView: 'dashboard' | 'board' | 'account' | 'dungeon' | 'skills';
   dungeonAlert: boolean;
 }
 
-const Header: React.FC<HeaderProps> = React.memo(({ playerProfile, onSignOut, onNavigateToBoard, onNavigateToDashboard, onNavigateToAccount, onNavigateToDungeon, activeView, dungeonAlert }) => {
+const Header: React.FC<HeaderProps> = React.memo(({ playerProfile, onSignOut, onNavigateToBoard, onNavigateToDashboard, onNavigateToAccount, onNavigateToDungeon, onNavigateToSkills, activeView, dungeonAlert }) => {
   const xpToNext = xpForLevel(playerProfile.level);
   const xpCurrentLevel = xpForLevel(playerProfile.level - 1) || 0;
   const currentLevelProgress = playerProfile.xp - xpCurrentLevel;
@@ -79,7 +85,7 @@ const Header: React.FC<HeaderProps> = React.memo(({ playerProfile, onSignOut, on
                     <span className="text-xs font-bold text-primary-foreground bg-primary px-1.5 py-0.5 rounded-sm tracking-wider">PRO</span>
                 )}
             </h2>
-            <p className="text-sm text-muted-foreground">{playerProfile.characterClass}</p>
+            <p className="text-sm text-muted-foreground">{playerProfile.specialization || playerProfile.characterClass}</p>
           </div>
         </div>
         <div className="flex-grow max-w-xs w-full">
@@ -94,6 +100,11 @@ const Header: React.FC<HeaderProps> = React.memo(({ playerProfile, onSignOut, on
             <nav className="hidden sm:flex items-center gap-1">
                 <Button variant={activeView === 'dashboard' ? 'secondary' : 'outline'} size="sm" onClick={onNavigateToDashboard} className="items-center gap-1.5"><LayoutGridIcon className="h-4 w-4" /> List</Button>
                 <Button variant={activeView === 'board' ? 'secondary' : 'outline'} size="sm" onClick={onNavigateToBoard} className="items-center gap-1.5"><CalendarDaysIcon className="h-4 w-4" /> Board</Button>
+                {playerProfile.specialization && (
+                    <Button variant={activeView === 'skills' ? 'secondary' : 'outline'} size="sm" onClick={onNavigateToSkills} className="items-center gap-1.5">
+                        <BrainCircuitIcon className="h-4 w-4" /> Skills
+                    </Button>
+                )}
                 <Button variant={activeView === 'dungeon' ? 'secondary' : 'outline'} size="sm" onClick={onNavigateToDungeon} className="relative items-center gap-1.5">
                     <SwordsIcon className="h-4 w-4" /> Dungeon
                     {dungeonAlert && <span className="absolute -top-1 -right-1 flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-destructive/80"></span></span>}

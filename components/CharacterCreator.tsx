@@ -37,6 +37,7 @@ interface CharacterCreatorProps {
   isOpen: boolean;
   onClose: () => void;
   onCreateProfile: (name: string, characterClass: string, avatarOptions: AvatarOptions, stats: Stats) => void;
+  initialName?: string;
 }
 
 const MAX_STAT_POINTS = 30;
@@ -45,8 +46,8 @@ const STAT_NAMES: (keyof Stats)[] = ['str', 'int', 'def', 'spd'];
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
-const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, onCreateProfile }) => {
-    const [name, setName] = useState('');
+const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, onCreateProfile, initialName }) => {
+    const [name, setName] = useState(initialName || '');
     const [selectedClass, setSelectedClass] = useState<CharacterClass>(CHARACTER_CLASSES[0]);
     const [avatarOptions, setAvatarOptions] = useState<AvatarOptions>(CHARACTER_CLASSES[0].avatar);
     const [stats, setStats] = useState<Stats>(CHARACTER_CLASSES[0].baseStats);
@@ -153,9 +154,9 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
     }, []);
     
     const reset = useCallback(() => {
-        setName('');
+        setName(initialName || '');
         setSelectedClass(CHARACTER_CLASSES[0]);
-    }, []);
+    }, [initialName]);
 
     const handleSubmit = async () => {
         if (!name.trim() || pointsRemaining < 0) return;
