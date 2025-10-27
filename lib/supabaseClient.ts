@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-// FIX: Using `import type` and importing all nested types to ensure the Database interface can be fully resolved.
-import type { PlayerProfile, Habit, AvatarOptions, Stats, Item } from '../types';
+// FIX: Using `import type` for Row types, as Insert/Update types are now inlined.
+import type { PlayerProfile, Habit } from '../types';
 
 // IMPORTANT: These values must be provided via environment variables.
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -20,8 +20,9 @@ if (!isSupabaseConfigured) {
 
 // We pass placeholders if not configured to prevent `createClient` from throwing an error.
 // The application logic in App.tsx will gate functionality based on `isSupabaseConfigured`.
-// FIX: Replaced Omit/Partial with explicit types to resolve a Supabase client type inference issue.
-// The TypeScript compiler was failing to resolve the nested generic types, causing all supabase calls to be typed as `never`.
+// FIX: The Supabase client's type inference was failing due to nested imported types for JSON columns (`avatar_options`, `stats`, `inventory`).
+// By inlining the shapes of these JSON objects directly into the `Insert` and `Update` definitions,
+// we provide a fully-resolved, concrete type that the client can correctly parse, fixing the `never` type issue across the app.
 export interface Database {
   public: {
     Tables: {
@@ -38,9 +39,28 @@ export interface Database {
           maxMp: number;
           gold: number;
           characterClass: string;
-          avatar_options: AvatarOptions;
-          stats: Stats;
-          inventory: Item[];
+          avatar_options: {
+            skinColor: string;
+            hairColor: string;
+            hairStyle: 'spiky' | 'long' | 'short' | 'bun' | 'mohawk';
+            outfitColor: string;
+            accentColor: string;
+            eyeStyle: 'normal' | 'happy' | 'angry' | 'sleepy';
+            hat: boolean;
+            weapon: 'sword' | 'staff' | 'bow' | 'none';
+            cloak: boolean;
+          };
+          stats: {
+            str: number;
+            int: number;
+            def: number;
+            spd: number;
+          };
+          inventory: {
+            id: string;
+            name: string;
+            description: string;
+          }[];
         };
         Update: {
           id?: string;
@@ -53,9 +73,28 @@ export interface Database {
           maxMp?: number;
           gold?: number;
           characterClass?: string;
-          avatar_options?: AvatarOptions;
-          stats?: Stats;
-          inventory?: Item[];
+          avatar_options?: {
+            skinColor: string;
+            hairColor: string;
+            hairStyle: 'spiky' | 'long' | 'short' | 'bun' | 'mohawk';
+            outfitColor: string;
+            accentColor: string;
+            eyeStyle: 'normal' | 'happy' | 'angry' | 'sleepy';
+            hat: boolean;
+            weapon: 'sword' | 'staff' | 'bow' | 'none';
+            cloak: boolean;
+          };
+          stats?: {
+            str: number;
+            int: number;
+            def: number;
+            spd: number;
+          };
+          inventory?: {
+            id: string;
+            name: string;
+            description: string;
+          }[];
           created_at?: string;
         };
       };
