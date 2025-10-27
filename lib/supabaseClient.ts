@@ -19,11 +19,7 @@ if (!isSupabaseConfigured) {
 
 // We pass placeholders if not configured to prevent `createClient` from throwing an error.
 // The application logic in App.tsx will gate functionality based on `isSupabaseConfigured`.
-export const supabase = createClient<Database>(
-  supabaseUrl || 'https://placeholder.supabase.co', 
-  supabaseAnonKey || 'placeholder-anon-key'
-);
-
+// FIX: Moved Database interface before createClient to ensure Supabase client is typed correctly.
 interface Database {
   public: {
     Tables: {
@@ -46,3 +42,7 @@ interface Database {
     };
   };
 }
+export const supabase = createClient<Database>(
+  supabaseUrl || 'https://placeholder.supabase.co', 
+  supabaseAnonKey || 'placeholder-anon-key'
+);

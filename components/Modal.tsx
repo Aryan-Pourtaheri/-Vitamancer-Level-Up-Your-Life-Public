@@ -28,7 +28,9 @@ const Modal = ({ open, onOpenChange, children }: ModalProps) => (
     </AnimatePresence>
 );
 
-const ModalContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, children, ...props }, ref) => (
+// FIX: Changed props from React.HTMLAttributes<HTMLDivElement> to React.ComponentProps<typeof motion.div>
+// to match the props expected by motion.div and resolve type conflicts (e.g., onDrag).
+const ModalContent = React.forwardRef<HTMLDivElement, React.ComponentProps<typeof motion.div>>(({ className, children, ...props }, ref) => (
     <motion.div
         ref={ref}
         initial={{ opacity: 0, scale: 0.95 }}

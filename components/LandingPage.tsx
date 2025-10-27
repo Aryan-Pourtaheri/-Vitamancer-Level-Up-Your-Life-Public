@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import Button from './PixelButton';
-import { motion, AnimatePresence } from 'framer-motion';
+// FIX: Imported Variants type from framer-motion to correctly type animation variants.
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from './Card';
 import { CHARACTER_CLASSES } from '../constants';
 import { ThemeToggleButton } from './ThemeToggleButton';
@@ -23,7 +24,8 @@ const containerVariants = {
   },
 };
 
-const itemVariants = {
+// FIX: Explicitly typed itemVariants with Variants to solve type incompatibility for the 'ease' property.
+const itemVariants: Variants = {
   hidden: { y: 20, opacity: 0 },
   visible: {
     y: 0,

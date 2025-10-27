@@ -149,6 +149,14 @@
           linear-gradient(90deg, hsl(var(--border) / 0.2) 1px, transparent 1px);
         background-size: 20px 20px;
       }
+
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
     </style>
   <script type="importmap">
 {

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import Button from './PixelButton';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from './Modal';
 import { Input } from './Input';
@@ -6,6 +6,7 @@ import { CHARACTER_CLASSES } from '../constants';
 import { cn } from '../lib/utils';
 import { AvatarOptions, Stats, CharacterClass } from '../types';
 import PlayerAvatar from './PlayerAvatar';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const DiceIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -16,6 +17,18 @@ const DiceIcon = (props: React.SVGProps<SVGSVGElement>) => (
 const ResetIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 2v6h6"></path><path d="M21 12A9 9 0 0 0 6 5.3L3 8"></path><path d="M21 22v-6h-6"></path><path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"></path>
+    </svg>
+);
+
+const ChevronLeftIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m15 18-6-6 6-6"/>
+    </svg>
+);
+
+const ChevronRightIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m9 18 6-6-6-6"/>
     </svg>
 );
 
@@ -40,6 +53,36 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
     
     const [loading, setLoading] = useState(false);
 
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(false);
+
+    const checkScrollButtons = useCallback(() => {
+        const el = scrollContainerRef.current;
+        if (el) {
+            const hasOverflow = el.scrollWidth > el.clientWidth;
+            setCanScrollLeft(el.scrollLeft > 0);
+            setCanScrollRight(hasOverflow && el.scrollLeft < el.scrollWidth - el.clientWidth - 1);
+        }
+    }, []);
+
+    useEffect(() => {
+        const scrollEl = scrollContainerRef.current;
+        if (scrollEl) {
+            checkScrollButtons();
+            scrollEl.addEventListener('scroll', checkScrollButtons, { passive: true });
+            window.addEventListener('resize', checkScrollButtons);
+
+            const timer = setTimeout(checkScrollButtons, 100);
+
+            return () => {
+                scrollEl.removeEventListener('scroll', checkScrollButtons);
+                window.removeEventListener('resize', checkScrollButtons);
+                clearTimeout(timer);
+            };
+        }
+    }, [checkScrollButtons, isOpen]);
+
     useEffect(() => {
         setAvatarOptions(selectedClass.avatar);
         setStats(selectedClass.baseStats);
@@ -56,6 +99,14 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
             if (newTotal > MAX_STAT_POINTS) return prev; 
             return { ...prev, [stat]: newValue };
         });
+    };
+
+    const handleScroll = (direction: 'left' | 'right') => {
+        const el = scrollContainerRef.current;
+        if (el) {
+            const scrollAmount = direction === 'left' ? -el.clientWidth * 0.75 : el.clientWidth * 0.75;
+            el.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
     };
 
     const randomize = useCallback(() => {
@@ -115,16 +166,16 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
     
     return (
         <Modal open={isOpen} onOpenChange={onClose}>
-            <ModalContent className="max-w-6xl">
+            <ModalContent className="max-w-7xl">
                 <ModalHeader>
                     <ModalTitle className="text-3xl font-mono font-bold text-center w-full">Forge Your Hero</ModalTitle>
                 </ModalHeader>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 py-4">
+                <div className="grid grid-cols-1 lg:grid-cols-7 lg:items-start gap-8 py-4 overflow-hidden">
                     
                     {/* --- Left Panel: Preview & Finalize --- */}
-                    <div className="lg:col-span-1 flex flex-col items-center justify-between gap-4 p-4 bg-secondary/30 rounded-lg border-2 border-border">
+                    <div className="lg:col-span-3 flex flex-col items-center justify-between gap-4 p-4 bg-secondary/30 rounded-lg border-2 border-border">
                         <div className="w-full flex-grow flex flex-col items-center gap-4">
-                            <div className="w-64 h-64 rounded-lg overflow-hidden border-4 border-border bg-background shadow-lg relative">
+                            <div className="w-full max-w-sm mx-auto aspect-square rounded-lg overflow-hidden border-4 border-border bg-background shadow-lg relative">
                                 <div className="absolute inset-0 bg-grid-pattern opacity-100 dark:opacity-40"></div>
                                 <PlayerAvatar options={avatarOptions} characterClass={selectedClass.name} />
                             </div>
@@ -136,8 +187,8 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
                                 className="text-center text-lg h-12 font-mono"
                              />
                             <div className="flex gap-2 w-full">
-                                <Button variant="outline" onClick={randomize} className="w-full"><DiceIcon className="w-4 h-4 mr-2" /> Random</Button>
-                                <Button variant="ghost" onClick={reset} className="w-full"><ResetIcon className="w-4 h-4 mr-2" /> Reset</Button>
+                                <Button variant="secondary" onClick={randomize} className="flex-1"><DiceIcon className="w-4 h-4 mr-2" /> Random</Button>
+                                <Button variant="secondary" onClick={reset} className="flex-1"><ResetIcon className="w-4 h-4 mr-2" /> Reset</Button>
                             </div>
                         </div>
 
@@ -150,14 +201,47 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
                     </div>
 
                     {/* --- Right Panel: Customization --- */}
-                    <div className="lg:col-span-2 space-y-6 overflow-y-auto max-h-[70vh] p-4 -mr-2 pr-6">
+                    <div className="lg:col-span-4 space-y-6 overflow-y-auto max-h-[70vh] p-4 -mr-2 pr-6">
                        {/* Class Selector */}
                         <div>
                             <h3 className="text-xl font-mono font-bold mb-3 text-primary">1. Choose Class</h3>
-                            <div className="flex gap-3 pb-3 -mx-2 px-2 overflow-x-auto">
-                                {CHARACTER_CLASSES.map(c => (
-                                <ClassCard key={c.name} characterClass={c} isSelected={selectedClass.name === c.name} onSelect={setSelectedClass} />
-                                ))}
+                            <div className="relative group">
+                                <div
+                                    ref={scrollContainerRef}
+                                    className="flex gap-3 pb-3 -mx-2 px-2 overflow-x-auto no-scrollbar"
+                                >
+                                    {CHARACTER_CLASSES.map(c => (
+                                    <ClassCard key={c.name} characterClass={c} isSelected={selectedClass.name === c.name} onSelect={setSelectedClass} />
+                                    ))}
+                                </div>
+                                <AnimatePresence>
+                                {canScrollLeft && (
+                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2">
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-10 w-10 rounded-full bg-card/80 backdrop-blur-sm opacity-50 group-hover:opacity-100 transition-opacity"
+                                            onClick={() => handleScroll('left')}
+                                            aria-label="Scroll left"
+                                        >
+                                            <ChevronLeftIcon className="w-5 h-5" />
+                                        </Button>
+                                    </motion.div>
+                                )}
+                                {canScrollRight && (
+                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2">
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-10 w-10 rounded-full bg-card/80 backdrop-blur-sm opacity-50 group-hover:opacity-100 transition-opacity"
+                                            onClick={() => handleScroll('right')}
+                                            aria-label="Scroll right"
+                                        >
+                                            <ChevronRightIcon className="w-5 h-5" />
+                                        </Button>
+                                    </motion.div>
+                                )}
+                                </AnimatePresence>
                             </div>
                         </div>
                         

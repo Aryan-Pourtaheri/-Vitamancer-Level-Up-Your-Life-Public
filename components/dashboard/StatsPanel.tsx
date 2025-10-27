@@ -15,7 +15,7 @@ const StatsPanel: React.FC<{ playerProfile: PlayerProfile }> = React.memo(({ pla
   return (
     <Card className="bg-card/80 backdrop-blur-sm sticky top-24">
       <CardHeader className="items-center text-center">
-        <div className="w-32 h-32 rounded-lg overflow-hidden border-2 border-border bg-secondary mb-4">
+        <div className="w-48 h-48 rounded-lg overflow-hidden border-2 border-border bg-secondary mb-4">
            <PlayerAvatar 
             options={playerProfile.avatar_options}
             characterClass={playerProfile.characterClass}
