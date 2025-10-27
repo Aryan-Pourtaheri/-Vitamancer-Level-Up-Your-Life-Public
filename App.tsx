@@ -4,6 +4,7 @@ import { Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
+import BoardPage from './components/BoardPage';
 import { PlayerProfile, Habit, AvatarOptions, Stats } from './types';
 import { xpForLevel, createInitialPlayerProfile } from './constants';
 import LevelUpModal from './components/LevelUpModal';
@@ -18,6 +19,7 @@ const ThemedApp: React.FC = () => {
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeView, setActiveView] = useState<'dashboard' | 'board'>('dashboard');
   
   const [isAuthModalOpen, setAuthModalOpen] = useState(false);
   const [isCreatorModalOpen, setCreatorModalOpen] = useState(false);
@@ -162,40 +164,21 @@ const ThemedApp: React.FC = () => {
     }
   }, [profile, isOffline]);
   
-  const handleCompleteHabit = useCallback(async (habitId: string) => {
-    const habit = habits.find(h => h.id === habitId);
-    if (!habit || habit.completed) return;
-    
-    let xpGained = 0;
-    switch (habit.difficulty) {
-      case 'easy': xpGained = 10; break;
-      case 'medium': xpGained = 25; break;
-      case 'hard': xpGained = 50; break;
-    }
-
-    if (isOffline) {
-      const updatedHabit = { ...habit, completed: true };
-      setHabits(prev => prev.map(h => h.id === habitId ? updatedHabit : h));
-      if (xpGained > 0) gainXP(xpGained);
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from('habits')
-      .update({ completed: true })
-      .eq('id', habitId)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Failed to complete habit", error);
-    } else if(data) {
-      setHabits(prev => prev.map(h => h.id === habitId ? data : h));
-      if(xpGained > 0) gainXP(xpGained);
-    }
-  }, [habits, gainXP, isOffline]);
-
   const handleUpdateHabit = useCallback(async (habitId: string, updates: Partial<Omit<Habit, 'id' | 'user_id'>>) => {
+    const oldHabit = habits.find(h => h.id === habitId);
+    if (!oldHabit) return;
+
+    // Grant XP only when moving to 'completed' from another status
+    if (updates.status === 'completed' && oldHabit.status !== 'completed') {
+        let xpGained = 0;
+        switch (oldHabit.difficulty) {
+            case 'easy': xpGained = 10; break;
+            case 'medium': xpGained = 25; break;
+            case 'hard': xpGained = 50; break;
+        }
+        if (xpGained > 0) gainXP(xpGained);
+    }
+    
     if (isOffline) {
         setHabits(prev => prev.map(h => h.id === habitId ? { ...h, ...updates } as Habit : h));
         return;
@@ -213,17 +196,17 @@ const ThemedApp: React.FC = () => {
     } else if (data) {
         setHabits(prev => prev.map(h => h.id === habitId ? data : h));
     }
-  }, [isOffline]);
+  }, [isOffline, habits, gainXP]);
   
   // FIX: Corrected the Omit type to exclude `created_at`, matching the type returned from the geminiService.
   // This resolves a critical type mismatch that was causing Supabase client type inference to fail.
-  const handleAddNewHabits = async (newHabits: Omit<Habit, 'id' | 'user_id' | 'completed' | 'created_at'>[]) => {
+  const handleAddNewHabits = async (newHabits: Omit<Habit, 'id' | 'user_id' | 'status' | 'created_at'>[]) => {
     if (isOffline) {
       const habitsToAdd = newHabits.map((h, i) => ({
         ...h,
         id: `offline-habit-${Date.now()}-${i}`,
         user_id: 'offline-user',
-        completed: false,
+        status: 'not_started',
       }));
       setHabits(prev => [...prev, ...habitsToAdd]);
       return;
@@ -231,7 +214,7 @@ const ThemedApp: React.FC = () => {
 
     if (!session?.user) return;
     
-    const habitsToInsert = newHabits.map(h => ({ ...h, user_id: session.user.id, completed: false }));
+    const habitsToInsert = newHabits.map(h => ({ ...h, user_id: session.user.id, status: 'not_started' as const }));
 
     const { data, error } = await supabase.from('habits').insert(habitsToInsert).select();
 
@@ -288,14 +271,26 @@ const ThemedApp: React.FC = () => {
       )}
       <div className={isOffline ? 'pt-10' : ''}>
         {profile ? (
-          <Dashboard
-            playerProfile={profile}
-            habits={habits}
-            onCompleteHabit={handleCompleteHabit}
-            onUpdateHabit={handleUpdateHabit}
-            onAddNewHabits={handleAddNewHabits}
-            onSignOut={handleSignOut}
-          />
+           activeView === 'dashboard' ? (
+              <Dashboard
+                playerProfile={profile}
+                habits={habits}
+                onUpdateHabit={handleUpdateHabit}
+                onAddNewHabits={handleAddNewHabits}
+                onSignOut={handleSignOut}
+                onNavigateToBoard={() => setActiveView('board')}
+                activeView={activeView}
+              />
+           ) : (
+              <BoardPage
+                playerProfile={profile}
+                habits={habits}
+                onUpdateHabit={handleUpdateHabit}
+                onSignOut={handleSignOut}
+                onNavigateToDashboard={() => setActiveView('dashboard')}
+                activeView={activeView}
+              />
+           )
         ) : (
           <LandingPage onGetStarted={() => isOffline ? setCreatorModalOpen(true) : setAuthModalOpen(true)} />
         )}

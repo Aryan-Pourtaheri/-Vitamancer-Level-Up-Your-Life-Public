@@ -8,7 +8,6 @@ import Button from '../PixelButton';
 
 interface HabitRowProps {
   habit: Habit;
-  onComplete: (id: string) => void;
   onUpdate: (id: string, updates: Partial<Habit>) => void;
 }
 
@@ -23,7 +22,7 @@ const FileTextIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 
-const HabitRow: React.FC<HabitRowProps> = React.memo(({ habit, onComplete, onUpdate }) => {
+const HabitRow: React.FC<HabitRowProps> = React.memo(({ habit, onUpdate }) => {
     const [isNotesOpen, setIsNotesOpen] = useState(false);
     const [notes, setNotes] = useState(habit.notes || '');
 
@@ -55,21 +54,21 @@ const HabitRow: React.FC<HabitRowProps> = React.memo(({ habit, onComplete, onUpd
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, x: -50 }}
           transition={{ duration: 0.3 }}
-          className={cn(`p-3 bg-secondary rounded-lg border-l-4 ${difficultyClasses[habit.difficulty]}`, habit.completed ? 'opacity-50' : '')}
+          className={cn(`p-3 bg-secondary rounded-lg border-l-4 ${difficultyClasses[habit.difficulty]}`, habit.status === 'completed' ? 'opacity-50' : '')}
         >
             <div className="flex items-center justify-between">
                 <div className="flex items-center">
                     <input 
                         type="checkbox" 
-                        checked={habit.completed}
-                        onChange={() => onComplete(habit.id)}
-                        disabled={habit.completed}
+                        checked={habit.status === 'completed'}
+                        onChange={() => onUpdate(habit.id, { status: 'completed' })}
+                        disabled={habit.status === 'completed'}
                         className="w-5 h-5 mr-4 cursor-pointer disabled:cursor-not-allowed accent-green-500"
                     />
-                    <span className={`transition-colors ${habit.completed ? 'line-through text-muted-foreground' : ''}`}>{habit.text}</span>
+                    <span className={`transition-colors ${habit.status === 'completed' ? 'line-through text-muted-foreground' : ''}`}>{habit.text}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    {!habit.completed && (
+                    {habit.status !== 'completed' && (
                         <div className="text-right text-sm flex-shrink-0">
                             <span className="font-bold text-green-400">+{xpAmount[habit.difficulty]} XP</span>
                         </div>
@@ -107,11 +106,10 @@ const HabitRow: React.FC<HabitRowProps> = React.memo(({ habit, onComplete, onUpd
 
 interface HabitListProps {
   habits: Habit[];
-  onCompleteHabit: (id: string) => void;
   onUpdateHabit: (id: string, updates: Partial<Habit>) => void;
 }
 
-const HabitList: React.FC<HabitListProps> = ({ habits, onCompleteHabit, onUpdateHabit }) => {
+const HabitList: React.FC<HabitListProps> = ({ habits, onUpdateHabit }) => {
   return (
     <Card className="bg-card/80 backdrop-blur-sm">
       <CardHeader>
@@ -121,7 +119,7 @@ const HabitList: React.FC<HabitListProps> = ({ habits, onCompleteHabit, onUpdate
         <div className="space-y-3">
           {habits.length > 0 ? (
             habits.map(habit => (
-              <HabitRow key={habit.id} habit={habit} onComplete={onCompleteHabit} onUpdate={onUpdateHabit} />
+              <HabitRow key={habit.id} habit={habit} onUpdate={onUpdateHabit} />
             ))
           ) : (
             <p className="text-muted-foreground py-4 text-center">No habits yet. Use the AI generator to create some new quests!</p>

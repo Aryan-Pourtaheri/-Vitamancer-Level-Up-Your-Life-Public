@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { PlayerProfile } from '../../types';
 import { xpForLevel } from '../../constants';
@@ -23,6 +24,14 @@ const GoldIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
+const CalendarDaysIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+);
+
+const LayoutGridIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+);
+
 
 const StatDisplay: React.FC<{ icon: React.ReactNode; value: number | string; }> = ({ icon, value }) => (
     <div className="flex items-center space-x-1.5 text-sm bg-secondary/50 px-2 py-1 rounded-md">
@@ -35,9 +44,12 @@ const StatDisplay: React.FC<{ icon: React.ReactNode; value: number | string; }> 
 interface HeaderProps {
   playerProfile: PlayerProfile;
   onSignOut: () => void;
+  onNavigateToBoard?: () => void;
+  onNavigateToDashboard?: () => void;
+  activeView: 'dashboard' | 'board';
 }
 
-const Header: React.FC<HeaderProps> = React.memo(({ playerProfile, onSignOut }) => {
+const Header: React.FC<HeaderProps> = React.memo(({ playerProfile, onSignOut, onNavigateToBoard, onNavigateToDashboard, activeView }) => {
   const xpToNext = xpForLevel(playerProfile.level);
   const xpCurrentLevel = xpForLevel(playerProfile.level - 1) || 0;
   const currentLevelProgress = playerProfile.xp - xpCurrentLevel;
@@ -63,6 +75,12 @@ const Header: React.FC<HeaderProps> = React.memo(({ playerProfile, onSignOut }) 
             <StatDisplay icon={<HeartIcon />} value={`${playerProfile.hp}/${playerProfile.maxHp}`} />
             <StatDisplay icon={<ManaIcon />} value={`${playerProfile.mp}/${playerProfile.maxMp}`} />
             <StatDisplay icon={<GoldIcon />} value={playerProfile.gold} />
+             {activeView === 'dashboard' && onNavigateToBoard && (
+                <Button variant="outline" size="sm" onClick={onNavigateToBoard} className="hidden sm:inline-flex items-center gap-1.5"><CalendarDaysIcon className="h-4 w-4" /> Board</Button>
+            )}
+            {activeView === 'board' && onNavigateToDashboard && (
+                <Button variant="outline" size="sm" onClick={onNavigateToDashboard} className="hidden sm:inline-flex items-center gap-1.5"><LayoutGridIcon className="h-4 w-4" /> List</Button>
+            )}
             <div className="hidden sm:block">
               <ThemeToggleButton />
             </div>

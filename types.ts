@@ -37,7 +37,7 @@ export interface PlayerProfile {
 
 export interface Item {
   id: string;
-  name: string;
+  name:string;
   description: string;
 }
 
@@ -46,7 +46,7 @@ export interface Habit {
   user_id: string;
   text: string;
   difficulty: 'easy' | 'medium' | 'hard';
-  completed: boolean;
+  status: 'not_started' | 'in_progress' | 'completed';
   notes?: string | null;
   created_at?: string;
 }

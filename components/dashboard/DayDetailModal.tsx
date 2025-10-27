@@ -45,15 +45,15 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({ date, habits, isOpen, o
                 key={habit.id}
                 className={cn(
                   "flex items-center p-3 rounded-lg border-l-4",
-                  habit.completed ? 'bg-green-500/10 border-green-500' : 'bg-secondary border-border'
+                  habit.status === 'completed' ? 'bg-green-500/10 border-green-500' : 'bg-secondary border-border'
                 )}
               >
-                {habit.completed ? (
+                {habit.status === 'completed' ? (
                   <CheckCircleIcon className="h-5 w-5 mr-3 text-green-400 flex-shrink-0" />
                 ) : (
                   <CircleIcon className="h-5 w-5 mr-3 text-muted-foreground flex-shrink-0" />
                 )}
-                <span className={cn(habit.completed && 'line-through text-muted-foreground')}>
+                <span className={cn(habit.status === 'completed' && 'line-through text-muted-foreground')}>
                   {habit.text}
                 </span>
               </div>

@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { Habit } from '../types';
 
@@ -5,7 +6,7 @@ import { Habit } from '../types';
 // Assume `process.env.API_KEY` is pre-configured and valid.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-export const generateHabitSuggestions = async (goal: string): Promise<Omit<Habit, 'id' | 'user_id' | 'completed' | 'created_at'>[]> => {
+export const generateHabitSuggestions = async (goal: string): Promise<Omit<Habit, 'id' | 'user_id' | 'status' | 'created_at'>[]> => {
   // Per guidelines, we can assume the API key is configured, but throwing a user-friendly
   // error is better than letting the SDK throw a generic one if it's missing at runtime.
   if (!process.env.API_KEY) {

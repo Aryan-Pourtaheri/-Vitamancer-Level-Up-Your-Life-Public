@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { generateHabitSuggestions } from '../../services/geminiService';
 import Button from '../PixelButton';
@@ -6,8 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../Card';
 import { Input } from '../Input';
 
 interface HabitGeneratorProps {
-  // FIX: Corrected the Omit type to match the parent component, ensuring type safety.
-  onAddHabits: (habits: Omit<Habit, 'id' | 'user_id' | 'completed' | 'created_at'>[]) => void;
+  onAddHabits: (habits: Omit<Habit, 'id' | 'user_id' | 'status' | 'created_at'>[]) => void;
 }
 
 const HabitGenerator: React.FC<HabitGeneratorProps> = ({ onAddHabits }) => {

@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 // FIX: Using `import type` for Row types, as Insert/Update types are now inlined.
 import type { PlayerProfile, Habit } from '../types';
@@ -104,7 +105,7 @@ export interface Database {
           user_id: string;
           text: string;
           difficulty: 'easy' | 'medium' | 'hard';
-          completed: boolean;
+          status: 'not_started' | 'in_progress' | 'completed';
           notes?: string | null;
         };
         Update: {
@@ -112,7 +113,7 @@ export interface Database {
           user_id?: string;
           text?: string;
           difficulty?: 'easy' | 'medium' | 'hard';
-          completed?: boolean;
+          status?: 'not_started' | 'in_progress' | 'completed';
           notes?: string | null;
           created_at?: string;
         };
