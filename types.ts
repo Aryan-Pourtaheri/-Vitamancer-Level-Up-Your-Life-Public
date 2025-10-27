@@ -7,6 +7,8 @@ export interface Stats {
   spd: number;
 }
 
+export type WeaponType = 'sword' | 'staff' | 'bow' | 'none' | 'epic_sword' | 'epic_staff' | 'epic_bow';
+
 export interface AvatarOptions {
   skinColor: string;
   hairColor: string;
@@ -15,7 +17,7 @@ export interface AvatarOptions {
   accentColor: string;
   eyeStyle: 'normal' | 'happy' | 'angry' | 'sleepy';
   hat: boolean;
-  weapon: 'sword' | 'staff' | 'bow' | 'none';
+  weapon: WeaponType;
   cloak: boolean;
 }
 
@@ -46,6 +48,11 @@ export interface Item {
   id: string;
   name:string;
   description: string;
+  cost: number;
+  type: 'weapon' | 'armor' | 'consumable';
+  statBonus: Partial<Stats>;
+  allowedClasses: string[];
+  weaponType?: WeaponType;
 }
 
 export interface Habit {

@@ -1,14 +1,12 @@
 
 
-
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
 import BoardPage from './components/BoardPage';
-import { PlayerProfile, Habit, AvatarOptions, Stats, Monster, Specialization, Skill } from './types';
+import { PlayerProfile, Habit, AvatarOptions, Stats, Monster, Specialization, Skill, Item } from './types';
 import { xpForLevel, createInitialPlayerProfile, SPECIALIZATIONS } from './constants';
 import LevelUpModal from './components/LevelUpModal';
 import CharacterCreator from './components/CharacterCreator';
@@ -21,6 +19,7 @@ import DungeonPage from './components/DungeonPage';
 import { generateMonsterFromHabit } from './services/geminiService';
 import SpecializationModal from './components/SpecializationModal';
 import SkillTreePage from './components/SkillTreePage';
+import ShopPage from './components/ShopPage';
 
 const ThemedApp: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -28,7 +27,7 @@ const ThemedApp: React.FC = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [monsters, setMonsters] = useState<Monster[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<'dashboard' | 'board' | 'account' | 'dungeon' | 'skills'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'board' | 'account' | 'dungeon' | 'skills' | 'shop'>('dashboard');
   
   const [authView, setAuthView] = useState<'landing' | 'login' | 'signup'>('landing');
   const [needsProfile, setNeedsProfile] = useState(false);
@@ -404,6 +403,38 @@ const ThemedApp: React.FC = () => {
         setProfile(profile);
     }
   };
+  
+  const handleBuyItem = async (item: Item) => {
+    if (!profile || profile.gold < item.cost) return;
+
+    const updatedStats = { ...profile.stats };
+    if (item.statBonus) {
+        Object.entries(item.statBonus).forEach(([stat, bonus]) => {
+            if (bonus) updatedStats[stat as keyof Stats] += bonus;
+        });
+    }
+    
+    const updatedAvatarOptions = { ...profile.avatar_options };
+    if (item.type === 'weapon' && item.weaponType) {
+        updatedAvatarOptions.weapon = item.weaponType;
+    }
+
+    const updatedProfilePayload = {
+        gold: profile.gold - item.cost,
+        inventory: [...profile.inventory, item],
+        stats: updatedStats,
+        avatar_options: updatedAvatarOptions,
+    };
+
+    setProfile(p => p ? { ...p, ...updatedProfilePayload } : null);
+
+    const { error } = await supabase.from('profiles').update(updatedProfilePayload).eq('id', profile.id);
+    if (error) {
+        console.error("Failed to buy item", error);
+        // Revert on error
+        setProfile(profile);
+    }
+  };
 
   const handleUpgrade = async () => {
     if (!profile) return;
@@ -447,6 +478,7 @@ const ThemedApp: React.FC = () => {
             onNavigateToAccount={() => setActiveView('account')}
             onNavigateToDungeon={() => setActiveView('dungeon')}
             onNavigateToSkills={() => setActiveView('skills')}
+            onNavigateToShop={() => setActiveView('shop')}
             activeView={activeView}
             dungeonAlert={monsters.length > 0}
           >
@@ -455,6 +487,7 @@ const ThemedApp: React.FC = () => {
             {activeView === 'account' && <AccountPage playerProfile={profile} onUpgrade={handleUpgrade} />}
             {activeView === 'dungeon' && <DungeonPage monsters={monsters} habits={habits} onUpdateHabit={handleUpdateHabit} />}
             {activeView === 'skills' && <SkillTreePage playerProfile={profile} onUnlockSkill={handleUnlockSkill} />}
+            {activeView === 'shop' && <ShopPage playerProfile={profile} onBuyItem={handleBuyItem} />}
           </Layout>
           {isLevelUpModalOpen && levelUpInfo && <LevelUpModal level={levelUpInfo.newLevel} onClose={() => setIsLevelUpModalOpen(false)} />}
           {isSpecializationModalOpen && <SpecializationModal choices={specializationChoices} onSelect={handleSetSpecialization} />}

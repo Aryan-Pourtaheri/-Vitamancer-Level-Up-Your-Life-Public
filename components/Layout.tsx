@@ -12,7 +12,8 @@ interface LayoutProps {
   onNavigateToAccount: () => void;
   onNavigateToDungeon: () => void;
   onNavigateToSkills: () => void;
-  activeView: 'dashboard' | 'board' | 'account' | 'dungeon' | 'skills';
+  onNavigateToShop: () => void;
+  activeView: 'dashboard' | 'board' | 'account' | 'dungeon' | 'skills' | 'shop';
   dungeonAlert: boolean;
   children: React.ReactNode;
 }
@@ -25,6 +26,7 @@ const Layout: React.FC<LayoutProps> = ({
   onNavigateToAccount,
   onNavigateToDungeon,
   onNavigateToSkills,
+  onNavigateToShop,
   activeView, 
   dungeonAlert,
   children 
@@ -39,6 +41,7 @@ const Layout: React.FC<LayoutProps> = ({
         onNavigateToAccount={onNavigateToAccount}
         onNavigateToDungeon={onNavigateToDungeon}
         onNavigateToSkills={onNavigateToSkills}
+        onNavigateToShop={onNavigateToShop}
         activeView={activeView}
         dungeonAlert={dungeonAlert}
       />

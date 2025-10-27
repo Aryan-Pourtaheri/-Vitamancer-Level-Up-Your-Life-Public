@@ -2,7 +2,7 @@
 
 import { createClient, Session, User } from '@supabase/supabase-js';
 // FIX: Using `import type` for Row types, as Insert/Update types are now inlined.
-import type { PlayerProfile, Habit, Monster } from '../types';
+import type { PlayerProfile, Habit, Monster, Item, WeaponType } from '../types';
 
 // IMPORTANT: These values are now sourced from your Supabase project.
 const supabaseUrl = process.env.SUPABASE_URL || 'https://pjvtduedgcanrslcetzh.supabase.co';
@@ -153,119 +153,18 @@ export interface Database {
     Tables: {
       profiles: {
         Row: PlayerProfile;
-        Insert: {
-          id: string;
-          name: string;
-          level: number;
-          xp: number;
-          hp: number;
-          maxHp: number;
-          mp: number;
-          maxMp: number;
-          gold: number;
-          characterClass: string;
-          subscription_tier: string;
-          specialization: string | null;
-          skill_points: number;
-          skills: string[];
-          avatar_options: {
-            skinColor: string;
-            hairColor: string;
-            hairStyle: 'spiky' | 'long' | 'short' | 'bun' | 'mohawk';
-            outfitColor: string;
-            accentColor: string;
-            eyeStyle: 'normal' | 'happy' | 'angry' | 'sleepy';
-            hat: boolean;
-            weapon: 'sword' | 'staff' | 'bow' | 'none';
-            cloak: boolean;
-          };
-          stats: {
-            str: number;
-            int: number;
-            def: number;
-            spd: number;
-          };
-          inventory: {
-            id: string;
-            name: string;
-            description: string;
-          }[];
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          level?: number;
-          xp?: number;
-          hp?: number;
-          maxHp?: number;
-          mp?: number;
-          maxMp?: number;
-          gold?: number;
-          characterClass?: string;
-          subscription_tier?: string;
-          pro_features_unlocked_at?: string | null;
-          last_monster_generation_at?: string | null;
-          specialization?: string | null;
-          skill_points?: number;
-          skills?: string[];
-          avatar_options?: {
-            skinColor: string;
-            hairColor: string;
-            hairStyle: 'spiky' | 'long' | 'short' | 'bun' | 'mohawk';
-            outfitColor: string;
-            accentColor: string;
-            eyeStyle: 'normal' | 'happy' | 'angry' | 'sleepy';
-            hat: boolean;
-            weapon: 'sword' | 'staff' | 'bow' | 'none';
-            cloak: boolean;
-          };
-          stats?: {
-            str: number;
-            int: number;
-            def: number;
-            spd: number;
-          };
-          inventory?: {
-            id: string;
-            name: string;
-            description: string;
-          }[];
-          created_at?: string;
-        };
+        Insert: Omit<PlayerProfile, 'created_at' | 'pro_features_unlocked_at' | 'last_monster_generation_at'>;
+        Update: Partial<PlayerProfile>;
       };
       habits: {
         Row: Habit;
-        Insert: {
-          user_id: string;
-          text: string;
-          difficulty: 'easy' | 'medium' | 'hard';
-          status: 'not_started' | 'in_progress' | 'completed';
-          notes?: string | null;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          text?: string;
-          difficulty?: 'easy' | 'medium' | 'hard';
-          status?: 'not_started' | 'in_progress' | 'completed';
-          notes?: string | null;
-          created_at?: string;
-        };
+        Insert: Omit<Habit, 'id' | 'created_at'>;
+        Update: Partial<Habit>;
       };
       monsters: {
         Row: Monster;
-        Insert: {
-            user_id: string;
-            name: string;
-            description: string;
-            hp: number;
-            maxHp: number;
-            linked_habit_id: string;
-        };
-        Update: {
-            id?: string;
-            hp?: number;
-        }
+        Insert: Omit<Monster, 'id' | 'created_at'>;
+        Update: Partial<Monster>;
       }
     };
     Views: {

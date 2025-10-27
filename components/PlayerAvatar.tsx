@@ -152,15 +152,24 @@ const drawWarrior = (ctx: RenderContext) => {
     // --- BACK LAYER ---
     if (options.cloak) { drawCloak(ctx, bodyY-2, cx); }
 
-    if (options.weapon === 'sword') {
-        const swordPalette = createPalette('#D8D8E0');
+    if (options.weapon === 'sword' || options.weapon === 'epic_sword') {
+        const isEpic = options.weapon === 'epic_sword';
+        const swordPalette = createPalette(isEpic ? '#E0FFFF' : '#D8D8E0');
+        const accentPalette = createPalette(isEpic ? '#FFD700' : '#8B4513');
         const swordY = bodyY - 15, swordX = cx - 18 + anim.sway;
-        fillRect(ctx, swordY + 20, swordX + 13, 3, 5, p.wood.base); // Hilt
+        
+        fillRect(ctx, swordY + 20, swordX + 13, 3, 5, accentPalette.base); // Hilt
         fillRect(ctx, swordY + 18, swordX + 8, 2, 14, p.accent.base); // Guard
-        fillRect(ctx, swordY, swordX + 15, 20, 2, swordPalette.s2); // Blade Shadow
-        fillRect(ctx, swordY, swordX + 14, 20, 2, swordPalette.base); // Blade
+        
+        const bladeW = isEpic ? 3 : 2;
+        fillRect(ctx, swordY, swordX + 15, 20, bladeW, swordPalette.s2); // Blade Shadow
+        fillRect(ctx, swordY, swordX + 14, 20, bladeW, swordPalette.base); // Blade
         fillRect(ctx, swordY + 2, swordX + 14, 16, 1, swordPalette.h1); // Blade Edge Highlight
-        if (anim.glint > 0) fillRect(ctx, swordY + 4, swordX + 14, anim.glint, 2, '#FFFFFF'); // Animated Glint
+
+        if (isEpic) {
+            setPixel(ctx, swordY + 23, swordX + 14, p.gem); // Pommel Gem
+        }
+        if (anim.glint > 0) fillRect(ctx, swordY + 4, swordX + 14, anim.glint, bladeW, '#FFFFFF'); // Animated Glint
     }
 
     // --- CHARACTER LAYER ---
@@ -204,14 +213,20 @@ const drawMage = (ctx: RenderContext) => {
     const headY = 10 + anim.yBob;
 
     // --- BACK LAYER ---
-    if (options.weapon === 'staff') {
+    if (options.weapon === 'staff' || options.weapon === 'epic_staff') {
+        const isEpic = options.weapon === 'epic_staff';
         const staffX = cx + 9 + anim.sway;
-        fillRect(ctx, 6, staffX, 36, 3, p.wood.s2); 
-        fillRect(ctx, 6, staffX + 1, 35, 2, p.wood.base);
-        const gemY = 4, gemX = staffX - 1;
-        fillRect(ctx, gemY, gemX, 7, 7, p.accent.s2); 
-        fillRect(ctx, gemY + 1, gemX + 1, 5, 5, p.gem);
-        if(anim.gemPulse > 0) fillRect(ctx, gemY + 2, gemX + 2, 3, 3, p.gemH);
+        const woodPalette = createPalette(isEpic ? '#4a2c0f' : '#8B4513');
+
+        fillRect(ctx, 6, staffX, 36, 3, woodPalette.s2); 
+        fillRect(ctx, 6, staffX + 1, 35, 2, woodPalette.base);
+        
+        const gemY = isEpic ? 2 : 4, gemX = staffX - 1;
+        const gemSize = isEpic ? 9 : 7;
+        
+        fillRect(ctx, gemY, gemX, gemSize, gemSize, p.accent.s2); 
+        fillRect(ctx, gemY + 1, gemX + 1, gemSize-2, gemSize-2, p.gem);
+        if(anim.gemPulse > 0) fillRect(ctx, gemY + 2, gemX + 2, gemSize-4, gemSize-4, p.gemH);
     }
     
     // --- CHARACTER LAYER ---
@@ -265,11 +280,15 @@ const drawRogue = (ctx: RenderContext) => {
         fillRect(ctx, headY, cx-5, 13, 11, cloakPalette.s2);
         fillRect(ctx, headY, cx-4, 12, 9, cloakPalette.base);
     }
-    if (options.weapon === 'bow') {
+    if (options.weapon === 'bow' || options.weapon === 'epic_bow') {
+        const isEpic = options.weapon === 'epic_bow';
         const bowSway = Math.round(anim.sway / 2);
         const bowX = cx - 16 + bowSway;
-        fillRect(ctx, 8, bowX, 32, 4, p.wood.s2);
-        fillRect(ctx, 9, bowX+1, 30, 2, p.wood.base);
+        const woodPalette = createPalette(isEpic ? '#228B22' : '#8B4513');
+        const h = isEpic ? 34 : 32;
+
+        fillRect(ctx, 8, bowX, h, 4, woodPalette.s2);
+        fillRect(ctx, 9, bowX+1, h-2, 2, woodPalette.base);
     }
 
     // --- CHARACTER LAYER ---
