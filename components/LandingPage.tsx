@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import Button from './PixelButton';
 // FIX: Imported Variants type from framer-motion to correctly type animation variants.
@@ -7,10 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from './Card';
 import { CHARACTER_CLASSES } from '../constants';
 import { ThemeToggleButton } from './ThemeToggleButton';
 import PlayerAvatar from './PlayerAvatar';
-
+import PricingCard from './PricingCard';
 
 interface LandingPageProps {
-  onGetStarted: () => void;
+  onSignupClick: () => void;
+  onLoginClick: () => void;
 }
 
 const containerVariants = {
@@ -45,7 +47,7 @@ const IconWrapper: React.FC<{ children: React.ReactNode, className?: string }> =
 
 const SwordsIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props} className="pixelated w-12 h-12">
-        <path d="M6 3h3v1h1v1h1v1h1v1h1v1h1v1h1v1h1v3h-1v-1h-1v-1h-1v-1h-1v-1h-1v-1h-1V9h-1V8h-1V7h-1V6h-1V3z"/>
+        <path d="M6 3h3v1h1v1h1v1h1v1h1v1h1v3h-1v-1h-1v-1h-1v-1h-1v-1h-1v-1h-1V9h-1V8h-1V7h-1V6h-1V3z"/>
         <path d="M15 3h3v1h-1v1h-1v1h-1v1h-1v1h-1v1h1v1h1v1h1v1h1v3h-3v-1h1v-1h1v-1h1v-1h1v-1h1V9h-1V8h-1V7h-1V6h-1V3z"/>
         <path d="M9 12v9h1v-1h1v-1h1v-1h1v-1h-1v1h-1v1h-1v1H9v-5h1v1h1v1h1v1h1v1h1v1h1v-1h-1v-1h-1v-1h-1v-1h-1V12H9z"/>
     </svg>
@@ -88,10 +90,11 @@ const FaqItem: React.FC<{ q: string; a: string }> = ({ q, a }) => {
     );
 };
 
-const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onSignupClick, onLoginClick }) => {
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden relative">
-      <div className="absolute top-4 right-4 z-50">
+      <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={onLoginClick}>Log In</Button>
         <ThemeToggleButton />
       </div>
       <motion.div 
@@ -112,7 +115,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
             Stop grinding, start playing. Vitamancer is a life RPG that turns your daily goals into epic quests. Build habits, earn XP, and become the hero of your own story.
           </motion.p>
           <motion.div variants={itemVariants} className="mt-12">
-            <Button onClick={onGetStarted} size="lg" className="transform hover:scale-105 transition-transform">
+            <Button onClick={onSignupClick} size="lg" className="transform hover:scale-105 transition-transform">
               Start Your Adventure
             </Button>
           </motion.div>
@@ -219,72 +222,57 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
             </motion.div>
         </motion.section>
         
-        {/* TESTIMONIALS */}
+        {/* PRICING SECTION */}
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={containerVariants} className="py-24">
             <motion.div variants={itemVariants} className="text-center max-w-3xl mx-auto mb-16">
-                <h3 className="text-3xl font-mono font-bold">Hear From Fellow Adventurers</h3>
-                <p className="text-muted-foreground mt-4 text-lg">Thousands have started their epic journey of self-improvement. See what they have to say.</p>
+                <h3 className="text-3xl font-mono font-bold">Choose Your Path</h3>
+                <p className="text-muted-foreground mt-4 text-lg">Start your journey for free, or upgrade to Pro to unlock the full power of Vitamancer.</p>
             </motion.div>
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                 <motion.div variants={itemVariants}>
-                    <Card className="h-full bg-secondary/30 flex flex-col">
-                      <CardContent className="p-6 flex-grow">
-                          <blockquote className="italic text-foreground/90">"I've tried every productivity app out there, but nothing stuck. Thinking of my tasks as 'quests' was a game-changer for my motivation. I'm finally consistent!"</blockquote>
-                      </CardContent>
-                      <CardHeader className="pt-0">
-                          <div className="flex items-center gap-3">
-                              <div className="w-16 h-16 bg-background/50 rounded-md flex items-center justify-center overflow-hidden"><PlayerAvatar characterClass="Mage" options={{skinColor: "#e8b3a5", hairColor: "#b0632b", hairStyle: "long", outfitColor: "#4682B4", accentColor: "#FFF8DC", eyeStyle: "happy", hat: false, weapon: 'none', cloak: true}} /></div>
-                              <div>
-                                  <p className="font-semibold font-mono">Alex M.</p>
-                                  <p className="text-sm text-muted-foreground">Level 12 Mage</p>
-                              </div>
-                          </div>
-                      </CardHeader>
-                    </Card>
+                    <PricingCard
+                        planName="Adventurer"
+                        price="Free"
+                        description="Begin your journey and build fundamental habits."
+                        features={[
+                            'Full Character Customization',
+                            'Manual Habit Tracking',
+                            'XP & Leveling System',
+                            'Basic Stat Progression',
+                        ]}
+                        ctaText="Start for Free"
+                        onCtaClick={onSignupClick}
+                    />
                 </motion.div>
                 <motion.div variants={itemVariants}>
-                    <Card className="h-full bg-secondary/30 flex flex-col">
-                      <CardContent className="p-6 flex-grow">
-                          <blockquote className="italic text-foreground/90">"As a student, it's easy to feel overwhelmed. Vitamancer helps me break down huge study goals into manageable daily quests. The AI suggestions are surprisingly helpful."</blockquote>
-                      </CardContent>
-                      <CardHeader className="pt-0">
-                          <div className="flex items-center gap-3">
-                               <div className="w-16 h-16 bg-background/50 rounded-md flex items-center justify-center overflow-hidden"><PlayerAvatar characterClass="Rogue" options={{skinColor: "#c09f8e", hairColor: "#2c222b", hairStyle: "short", outfitColor: "#2E8B57", accentColor: "#F0E68C", eyeStyle: "normal", hat: true, weapon: 'bow', cloak: false}} /></div>
-                              <div>
-                                  <p className="font-semibold font-mono">Sara K.</p>
-                                  <p className="text-sm text-muted-foreground">Level 9 Rogue</p>
-                              </div>
-                          </div>
-                      </CardHeader>
-                    </Card>
-                </motion.div>
-                <motion.div variants={itemVariants}>
-                    <Card className="h-full bg-secondary/30 flex flex-col">
-                      <CardContent className="p-6 flex-grow">
-                          <blockquote className="italic text-foreground/90">"It's just... fun! Seeing my character level up alongside my real-life progress is incredibly rewarding. I hit a new deadlift PR and my STR stat increased. How cool is that?"</blockquote>
-                      </CardContent>
-                       <CardHeader className="pt-0">
-                          <div className="flex items-center gap-3">
-                               <div className="w-16 h-16 bg-background/50 rounded-md flex items-center justify-center overflow-hidden"><PlayerAvatar characterClass="Warrior" options={{skinColor: "#d5a38a", hairColor: "#8c6f60", hairStyle: "spiky", outfitColor: "#A52A2A", accentColor: "#D2B48C", eyeStyle: "angry", hat: false, weapon: 'sword', cloak: false}} /></div>
-                              <div>
-                                  <p className="font-semibold font-mono">Dave R.</p>
-                                  <p className="text-sm text-muted-foreground">Level 15 Warrior</p>
-                              </div>
-                          </div>
-                      </CardHeader>
-                    </Card>
+                    <PricingCard
+                        planName="Vitamancer Pro"
+                        price="$5"
+                        pricePeriod="/ month"
+                        description="Unlock the ultimate tools for self-improvement."
+                        features={[
+                            'Everything in Adventurer, plus:',
+                            'AI-Powered Quest Forge',
+                            'Advanced Analytics (Coming Soon)',
+                            'Exclusive Avatar Items (Coming Soon)',
+                            'Priority Support',
+                        ]}
+                        ctaText="Go Pro"
+                        onCtaClick={onSignupClick}
+                        isFeatured
+                    />
                 </motion.div>
             </div>
         </motion.section>
-
+        
         {/* FAQ */}
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={containerVariants} className="py-24">
             <motion.div variants={itemVariants} className="text-center max-w-3xl mx-auto mb-12">
                 <h3 className="text-3xl font-mono font-bold">Your Questions, Answered</h3>
             </motion.div>
             <motion.div variants={itemVariants} className="max-w-3xl mx-auto">
-                <FaqItem q="Is Vitamancer free to use?" a="Yes! The core features of Vitamancer—creating your character, tracking habits as quests, and leveling up—are completely free. We may introduce optional cosmetic items or advanced features in the future." />
-                <FaqItem q="How does the AI quest generation work?" a="We use Google's powerful Gemini API. When you provide a goal, the AI analyzes it and breaks it down into smaller, actionable steps, which we then present to you as 'quests' categorized by difficulty." />
+                <FaqItem q="Is Vitamancer free to use?" a="Yes! The core features of Vitamancer—creating your character, tracking habits as quests, and leveling up—are completely free in the 'Adventurer' plan. The 'Pro' plan adds advanced features like the AI Quest Forge." />
+                <FaqItem q="How does the AI quest generation work?" a="We use Google's powerful Gemini API. When you provide a goal, the AI analyzes it and breaks it down into smaller, actionable steps, which we then present to you as 'quests' categorized by difficulty. This is a Pro feature." />
                 <FaqItem q="Is my data safe?" a="Absolutely. We take your privacy seriously. All your data is securely stored and we will never share your personal information with third parties. For more details, please see our privacy policy." />
                 <FaqItem q="Can I use this on my phone?" a="Vitamancer is a fully responsive web application, which means it works beautifully on desktops, tablets, and mobile phones through your web browser. A dedicated mobile app is on our roadmap!" />
             </motion.div>
@@ -297,7 +285,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
             Your adventure awaits. Sign up for free, create your hero, and start turning your ambitions into achievements.
           </p>
           <div className="mt-10">
-            <Button onClick={onGetStarted} size="lg" className="transform hover:scale-105 transition-transform">
+            <Button onClick={onSignupClick} size="lg" className="transform hover:scale-105 transition-transform">
               Start Leveling Up
             </Button>
           </div>

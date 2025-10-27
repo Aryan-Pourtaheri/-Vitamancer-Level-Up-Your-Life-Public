@@ -11,7 +11,7 @@ Vitamancer is a web application that transforms self-improvement into a captivat
 -   **Gamified Habit Tracking**: Convert your habits into "Daily Quests." Each completed quest rewards you with XP, helping you level up.
 -   **AI Quest Forge**: Powered by the Google Gemini API, this feature generates personalized, actionable quests based on your larger goals (e.g., "get fit," "learn to code").
 -   **Point-Buy Stat System**: Your character has core RPG stats (Strength, Intelligence, Defense, Speed) that you allocate yourself. These stats grow as you level up, and can influence gameplay.
--   **Seamless Offline Mode**: Try the app without any setup! Vitamancer runs in a fully interactive offline demo mode if a database connection isn't configured.
+-   **Authentication Required**: User accounts are required to save progress. Vitamancer uses Supabase for secure authentication and data storage.
 -   **Modern UI/UX**: A clean, responsive interface built with Tailwind CSS and Framer Motion, complete with beautiful light and dark themes.
 
 ## Tech Stack
@@ -20,7 +20,7 @@ Vitamancer is a web application that transforms self-improvement into a captivat
 -   **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 -   **Animations**: [Framer Motion](https://www.framer.com/motion/)
 -   **AI**: [Google Gemini API](https://ai.google.dev/)
--   **Backend & DB (Optional)**: [Supabase](https://supabase.io/)
+-   **Backend & DB**: [Supabase](https://supabase.io/)
 
 ## Getting Started
 
@@ -59,7 +59,7 @@ You need to have [Node.js](https://nodejs.org/) and [npm](https://www.npmjs.com/
     ```
 
     **Important Notes:**
-    -   If `SUPABASE_URL` and `SUPABASE_ANON_KEY` are not provided, the application will automatically launch in a **fully interactive offline mode**. Your progress will not be saved between sessions.
+    -   `SUPABASE_URL` and `SUPABASE_ANON_KEY` **must** be provided for the application to function. Without them, authentication will be disabled.
     -   If `API_KEY` is not provided, the "AI Quest Forge" feature will be disabled, but the rest of the app will function normally.
 
 4.  **Run the development server:**

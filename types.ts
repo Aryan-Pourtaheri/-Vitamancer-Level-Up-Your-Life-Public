@@ -33,6 +33,8 @@ export interface PlayerProfile {
   stats: Stats;
   inventory: Item[];
   created_at?: string;
+  subscription_tier: 'free' | 'pro';
+  pro_features_unlocked_at?: string | null;
 }
 
 export interface Item {

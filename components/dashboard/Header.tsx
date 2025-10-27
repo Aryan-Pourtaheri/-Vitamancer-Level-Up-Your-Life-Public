@@ -32,6 +32,9 @@ const LayoutGridIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
 );
 
+const UserIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+);
 
 const StatDisplay: React.FC<{ icon: React.ReactNode; value: number | string; }> = ({ icon, value }) => (
     <div className="flex items-center space-x-1.5 text-sm bg-secondary/50 px-2 py-1 rounded-md">
@@ -46,10 +49,11 @@ interface HeaderProps {
   onSignOut: () => void;
   onNavigateToBoard?: () => void;
   onNavigateToDashboard?: () => void;
-  activeView: 'dashboard' | 'board';
+  onNavigateToAccount?: () => void;
+  activeView: 'dashboard' | 'board' | 'account';
 }
 
-const Header: React.FC<HeaderProps> = React.memo(({ playerProfile, onSignOut, onNavigateToBoard, onNavigateToDashboard, activeView }) => {
+const Header: React.FC<HeaderProps> = React.memo(({ playerProfile, onSignOut, onNavigateToBoard, onNavigateToDashboard, onNavigateToAccount, activeView }) => {
   const xpToNext = xpForLevel(playerProfile.level);
   const xpCurrentLevel = xpForLevel(playerProfile.level - 1) || 0;
   const currentLevelProgress = playerProfile.xp - xpCurrentLevel;
@@ -63,7 +67,12 @@ const Header: React.FC<HeaderProps> = React.memo(({ playerProfile, onSignOut, on
             <span className="font-mono text-xl font-bold text-primary">Lvl {playerProfile.level}</span>
           </div>
           <div className="w-48">
-            <h2 className="text-xl font-bold truncate font-mono">{playerProfile.name}</h2>
+            <h2 className="text-xl font-bold truncate font-mono flex items-center gap-2">
+                {playerProfile.name}
+                {playerProfile.subscription_tier === 'pro' && (
+                    <span className="text-xs font-bold text-primary-foreground bg-primary px-1.5 py-0.5 rounded-sm tracking-wider">PRO</span>
+                )}
+            </h2>
             <p className="text-sm text-muted-foreground">{playerProfile.characterClass}</p>
           </div>
         </div>
@@ -81,6 +90,15 @@ const Header: React.FC<HeaderProps> = React.memo(({ playerProfile, onSignOut, on
             {activeView === 'board' && onNavigateToDashboard && (
                 <Button variant="outline" size="sm" onClick={onNavigateToDashboard} className="hidden sm:inline-flex items-center gap-1.5"><LayoutGridIcon className="h-4 w-4" /> List</Button>
             )}
+            
+            {playerProfile.subscription_tier === 'free' && (
+                <Button size="sm" onClick={onNavigateToAccount} className="hidden sm:inline-flex animate-pulse">Upgrade</Button>
+            )}
+
+             <Button variant="outline" size="icon" className="h-9 w-9" onClick={onNavigateToAccount}>
+                <UserIcon className="h-4 w-4" />
+             </Button>
+            
             <div className="hidden sm:block">
               <ThemeToggleButton />
             </div>

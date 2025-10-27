@@ -40,6 +40,7 @@ export interface Database {
           maxMp: number;
           gold: number;
           characterClass: string;
+          subscription_tier: string;
           avatar_options: {
             skinColor: string;
             hairColor: string;
@@ -74,6 +75,8 @@ export interface Database {
           maxMp?: number;
           gold?: number;
           characterClass?: string;
+          subscription_tier?: string;
+          pro_features_unlocked_at?: string | null;
           avatar_options?: {
             skinColor: string;
             hairColor: string;

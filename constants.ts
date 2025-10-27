@@ -3,7 +3,7 @@ import { PlayerProfile, CharacterClass, AvatarOptions, Stats } from './types';
 
 export const xpForLevel = (lvl: number): number => Math.floor(100 * Math.pow(lvl, 1.5));
 
-export const createInitialPlayerProfile = (userId: string, characterClass: string, name: string, avatarOptions: AvatarOptions, stats: Stats): Omit<PlayerProfile, 'created_at'> => {
+export const createInitialPlayerProfile = (userId: string, characterClass: string, name: string, avatarOptions: AvatarOptions, stats: Stats): Omit<PlayerProfile, 'created_at' | 'pro_features_unlocked_at'> => {
   return {
     id: userId,
     name: name,
@@ -18,6 +18,7 @@ export const createInitialPlayerProfile = (userId: string, characterClass: strin
     avatar_options: avatarOptions,
     stats: stats,
     inventory: [{ id: 'potion1', name: 'Health Potion', description: 'Restores 50 HP.' }],
+    subscription_tier: 'free',
   };
 };
 
