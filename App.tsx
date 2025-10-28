@@ -1,6 +1,5 @@
 
 
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
@@ -67,12 +66,10 @@ const ThemedApp: React.FC = () => {
       .single();
 
     if (profileData) {
-        // Ensure complex types have default values to prevent runtime errors
         const inventory = profileData.inventory || [];
         const skills = profileData.skills || [];
         const avatar_options = { hat: false, weapon: 'none', cloak: false, ...profileData.avatar_options };
         
-        // DERIVE skill_points since it's not in the DB
         const totalPointsFromLevels = profileData.level > 0 ? profileData.level - 1 : 0;
         
         let spentPoints = 0;
@@ -95,15 +92,23 @@ const ThemedApp: React.FC = () => {
         setProfile(fetchedProfile);
         
         const { data: habitsData, error: habitsError } = await supabase.from('habits').select('*').eq('user_id', user.id);
-        if (habitsData) setHabits(habitsData);
+        if (habitsData) {
+            const processedHabits = habitsData.map(h => {
+                const notes = h.notes || '';
+                const typeMatch = notes.match(/^\[type:(daily|monthly|yearly)\]\s*/);
+                const type = typeMatch ? typeMatch[1] : 'daily';
+                const cleanNotes = typeMatch ? notes.substring(typeMatch[0].length) : notes;
+                
+                return { ...h, type: type as Habit['type'], notes: cleanNotes || null };
+            });
+            setHabits(processedHabits);
+            await generateMonstersForFailedHabits(fetchedProfile, habitsData);
+        }
         if (habitsError) console.error('Error fetching habits:', habitsError);
 
         const { data: monsterData, error: monsterError } = await supabase.from('monsters').select('*').eq('user_id', user.id);
         if (monsterData) setMonsters(monsterData);
         if (monsterError) console.error('Error fetching monsters:', monsterError);
-        
-        // This is where monster generation logic is triggered
-        await generateMonstersForFailedHabits(fetchedProfile, habitsData || []);
 
     } else {
       setNeedsProfile(true);
@@ -113,7 +118,7 @@ const ThemedApp: React.FC = () => {
     setLoading(false);
   }, []);
 
-  const generateMonstersForFailedHabits = async (playerProfile: PlayerProfile, currentHabits: Habit[]) => {
+  const generateMonstersForFailedHabits = async (playerProfile: PlayerProfile, currentHabits: Omit<Habit, 'type'>[]) => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const lastGenerationDate = playerProfile.last_monster_generation_at ? new Date(playerProfile.last_monster_generation_at) : null;
@@ -140,7 +145,7 @@ const ThemedApp: React.FC = () => {
                     maxHp: monsterDetails.hp,
                     linked_habit_id: habit.id,
                 };
-                const { data: createdMonster, error } = await supabase.from('monsters').insert(newMonster).select().single();
+                const { data: createdMonster, error } = await supabase.from('monsters').insert([newMonster]).select().single();
                 if (error) {
                     console.error("Failed to save monster:", error);
                 } else if (createdMonster) {
@@ -257,25 +262,19 @@ const ThemedApp: React.FC = () => {
     let xpChange = 0;
     const difficultyMap = { easy: 10, medium: 25, hard: 50 };
 
-    // Gaining XP: Moving to 'completed' from any other state
     if (updates.status === 'completed' && oldHabit.status !== 'completed') {
         xpChange = difficultyMap[oldHabit.difficulty];
-
-        // Monster defeat logic
         const monsterToDefeat = monsters.find(m => m.linked_habit_id === habitId);
         if (monsterToDefeat) {
             setMonsters(prev => prev.filter(m => m.id !== monsterToDefeat.id));
             const bonusGold = 5;
             setProfile(p => p ? ({ ...p, gold: p.gold + bonusGold }) : null);
-
             await supabase.from('monsters').delete().eq('id', monsterToDefeat.id);
             if (profile) await supabase.from('profiles').update({ gold: profile.gold + bonusGold }).eq('id', profile.id);
-
             console.log(`Monster ${monsterToDefeat.name} defeated! +${bonusGold} gold.`);
         }
     }
     
-    // Losing XP: Moving from 'completed' to any other state
     if (oldHabit.status === 'completed' && (updates.status === 'not_started' || updates.status === 'in_progress')) {
         xpChange = -difficultyMap[oldHabit.difficulty];
     }
@@ -284,11 +283,24 @@ const ThemedApp: React.FC = () => {
         gainXP(xpChange);
     }
 
+    const originalHabits = habits;
     const updatedHabits = habits.map(h => h.id === habitId ? { ...h, ...updates } : h);
     setHabits(updatedHabits);
     
-    const { error } = await supabase.from('habits').update(updates).eq('id', habitId);
-    if (error) console.error("Failed to update habit", error);
+    // Omit 'type' from the payload to Supabase and handle notes.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { type, ...dbUpdates } = updates;
+
+    if (Object.prototype.hasOwnProperty.call(dbUpdates, 'notes')) {
+        const cleanNotes = dbUpdates.notes || '';
+        dbUpdates.notes = `[type:${oldHabit.type}] ${cleanNotes}`.trim();
+    }
+    
+    const { error } = await supabase.from('habits').update(dbUpdates).eq('id', habitId);
+    if (error) {
+        console.error("Failed to update habit", error);
+        setHabits(originalHabits); // Revert on error
+    }
   }, [habits, gainXP, monsters, profile]);
   
   const handleAddNewHabits = async (newHabits: Omit<Habit, 'id' | 'user_id' | 'status' | 'created_at'>[]) => {
@@ -298,257 +310,238 @@ const ThemedApp: React.FC = () => {
       return;
     }
     
-    const habitsToInsert = newHabits.map(h => ({ ...h, user_id: userId, status: 'not_started' as const }));
+    const habitsToInsert = newHabits.map(h => {
+        const { type, ...rest } = h;
+        return {
+            ...rest,
+            user_id: userId,
+            status: 'not_started' as const,
+            notes: `[type:${type}]`
+        };
+    });
     
-    const { data: insertedHabits, error } = await supabase
-      .from('habits')
-      .insert(habitsToInsert)
-      .select();
-
+    const { data: insertedHabits, error } = await supabase.from('habits').insert(habitsToInsert).select();
+    
     if (error) {
-      console.error("Failed to add new habits", error);
+        console.error("Failed to add new habits", error);
     } else if (insertedHabits) {
-      setHabits(prev => [...prev, ...insertedHabits]);
+        const processedNewHabits = insertedHabits.map(h => {
+            const notes = h.notes || '';
+            const typeMatch = notes.match(/^\[type:(daily|monthly|yearly)\]\s*/);
+            const type = typeMatch ? typeMatch[1] : 'daily';
+            const cleanNotes = typeMatch ? notes.substring(typeMatch[0].length) : notes;
+            return { ...h, type: type as Habit['type'], notes: cleanNotes || null };
+        });
+        setHabits(prev => [...prev, ...processedNewHabits]);
     }
   };
 
-  const handleAddNewHabit = async (newHabit: Omit<Habit, 'id' | 'user_id' | 'status' | 'created_at'>) => {
-    const userId = session?.user?.id;
-    if (!userId) {
-      console.error("Attempted to add a habit without a user session.");
-      return;
-    }
-
-    const habitToInsert = { ...newHabit, user_id: userId, status: 'not_started' as const };
-    
-    const { data: insertedHabit, error } = await supabase
-      .from('habits')
-      .insert(habitToInsert)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Failed to add new habit", error);
-    } else if (insertedHabit) {
-      setHabits(prev => [...prev, insertedHabit]);
-    }
+  const handleAddNewHabit = async (habit: Omit<Habit, 'id' | 'user_id' | 'status' | 'created_at'>) => {
+    await handleAddNewHabits([habit]);
   };
-  
-  const handleDeleteHabit = async (habitId: string) => {
-    // The DB is set to cascade deletes, so the linked monster will be deleted automatically.
-    // We just need to update the local state to match.
-    const monsterLinked = monsters.find(m => m.linked_habit_id === habitId);
+
+  const handleDeleteHabit = useCallback(async (habitId: string) => {
+    const originalHabits = habits;
+    const monsterToDelete = monsters.find(m => m.linked_habit_id === habitId);
     
-    // Optimistically update UI
+    if (monsterToDelete) {
+        const { error: monsterError } = await supabase.from('monsters').delete().eq('id', monsterToDelete.id);
+        if (monsterError) {
+            console.error("Failed to delete linked monster:", monsterError);
+            return; 
+        }
+        setMonsters(prev => prev.filter(m => m.id !== monsterToDelete.id));
+    }
+
     setHabits(prev => prev.filter(h => h.id !== habitId));
-    if (monsterLinked) {
-      setMonsters(prev => prev.filter(m => m.id !== monsterLinked.id));
-    }
-
     const { error } = await supabase.from('habits').delete().eq('id', habitId);
     if (error) {
-      console.error("Failed to delete habit", error);
-      // On failure, refetch all user data to revert UI changes and stay in sync.
-      if(session?.user) fetchUserData(session.user);
+        console.error("Failed to delete habit", error);
+        setHabits(originalHabits);
+        if (monsterToDelete) fetchUserData(session?.user);
     }
+  }, [habits, monsters, session, fetchUserData]);
+  
+  const handleCreateProfile = async (name: string, characterClass: string, avatarOptions: AvatarOptions, stats: Stats) => {
+      const user = session?.user;
+      if (!user) return;
+      const initialProfileData = createInitialPlayerProfile(user.id, characterClass, name, avatarOptions, stats);
+      
+      // FIX: The `initialProfileData` object from `createInitialPlayerProfile` does not contain `skill_points`,
+      // so it cannot be destructured. The object is already correctly shaped for the database insert.
+      const { data, error } = await supabase.from('profiles').insert([initialProfileData]).select().single();
+      if (error) {
+          console.error("Failed to create profile", error);
+      } else if (data) {
+          const newProfile: PlayerProfile = {
+              ...data,
+              inventory: data.inventory || [],
+              skills: data.skills || [],
+              avatar_options: { hat: false, weapon: 'none', cloak: false, ...data.avatar_options },
+              skill_points: 0,
+          };
+          setProfile(newProfile);
+          setNeedsProfile(false);
+      }
   };
   
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    setSession(null);
-    setProfile(null);
-    setHabits([]);
-    setMonsters([]);
-  };
-
-  const handleCreateProfile = async (name: string, characterClass: string, avatarOptions: AvatarOptions, stats: Stats) => {
-    if (!session?.user) return;
-    
-    const dbPayload = createInitialPlayerProfile(session.user.id, characterClass, name, avatarOptions, stats);
-
-    const { data, error } = await supabase.from('profiles').insert(dbPayload).select().single();
-    
-    if (error) {
-      console.error("Failed to create profile", error);
-    } else if (data) {
-      // The DB returns a profile without skill_points. We add it for the client state.
-      const clientProfile: PlayerProfile = { ...data, skill_points: 0 };
-      setProfile(clientProfile);
-      setNeedsProfile(false);
-    }
-  };
-
-  const handleSetSpecialization = async (spec: Specialization) => {
+  const handleSelectSpecialization = async (spec: Specialization) => {
     if (!profile) return;
     
-    const updatedStats = { ...profile.stats };
-    Object.entries(spec.statBonus).forEach(([stat, bonus]) => {
-        updatedStats[stat as keyof Stats] += bonus;
-    });
-
-    const updatedProfile = { ...profile, specialization: spec.name, stats: updatedStats };
+    const updatedProfile = {
+      ...profile,
+      specialization: spec.name,
+      stats: {
+        str: profile.stats.str + (spec.statBonus.str || 0),
+        int: profile.stats.int + (spec.statBonus.int || 0),
+        def: profile.stats.def + (spec.statBonus.def || 0),
+        spd: profile.stats.spd + (spec.statBonus.spd || 0),
+      }
+    };
+    
     setProfile(updatedProfile);
     setIsSpecializationModalOpen(false);
-
-    const { error } = await supabase
-        .from('profiles')
-        .update({ specialization: spec.name, stats: updatedStats })
-        .eq('id', profile.id);
-
+    
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { skill_points, ...dbPayload } = updatedProfile;
+    const { error } = await supabase.from('profiles').update(dbPayload).eq('id', profile.id);
     if (error) {
-        console.error("Failed to update specialization", error);
-        // Revert on error
+        console.error("Failed to update specialization:", error);
         setProfile(profile);
     }
   };
 
   const handleUnlockSkill = async (skill: Skill) => {
-    if (!profile || profile.skill_points < skill.cost) return;
+    if (!profile || !profile.specialization) return;
+    if (profile.skill_points < skill.cost || profile.skills.includes(skill.id)) return;
+
+    const newSkills = [...profile.skills, skill.id];
+    const newSkillPoints = profile.skill_points - skill.cost;
     
-    // Check dependencies
-    const hasDependencies = skill.dependencies?.every(depId => profile.skills.includes(depId)) ?? true;
-    if (!hasDependencies) {
-        console.error("Cannot unlock skill: dependencies not met.");
-        return;
-    }
-
-    const updatedStats = { ...profile.stats };
+    const updatedStats: Stats = { ...profile.stats };
     if (skill.statBonus) {
-        Object.entries(skill.statBonus).forEach(([stat, bonus]) => {
-            if (bonus) updatedStats[stat as keyof Stats] += bonus;
-        });
+      for (const [stat, bonus] of Object.entries(skill.statBonus)) {
+        updatedStats[stat as keyof Stats] += bonus;
+      }
     }
+    
+    const updatedProfile = { ...profile, skills: newSkills, skill_points: newSkillPoints, stats: updatedStats };
+    setProfile(updatedProfile);
 
-    const updatedProfilePayload = {
-        skill_points: profile.skill_points - skill.cost,
-        skills: [...profile.skills, skill.id],
-        stats: updatedStats
-    };
-
-    setProfile(p => p ? { ...p, ...updatedProfilePayload } : null);
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { skill_points, ...dbPayload } = updatedProfilePayload;
-    const { error } = await supabase.from('profiles').update(dbPayload).eq('id', profile.id);
+    const { error } = await supabase.from('profiles').update({ skills: newSkills, stats: updatedStats }).eq('id', profile.id);
     if (error) {
         console.error("Failed to unlock skill", error);
-        // Revert on error
         setProfile(profile);
     }
   };
-  
+
   const handleBuyItem = async (item: Item) => {
-    if (!profile || profile.gold < item.cost) return;
+    if (!profile || profile.gold < item.cost || profile.inventory.some(i => i.id === item.id)) return;
 
-    const updatedStats = { ...profile.stats };
-    if (item.statBonus) {
-        Object.entries(item.statBonus).forEach(([stat, bonus]) => {
-            if (bonus) updatedStats[stat as keyof Stats] += bonus;
-        });
-    }
-    
-    const updatedAvatarOptions = { ...profile.avatar_options };
-    if (item.type === 'weapon' && item.weaponType) {
-        updatedAvatarOptions.weapon = item.weaponType;
-    }
-
-    const updatedProfilePayload = {
+    const updatedProfile = {
+        ...profile,
         gold: profile.gold - item.cost,
         inventory: [...profile.inventory, item],
-        stats: updatedStats,
-        avatar_options: updatedAvatarOptions,
+        avatar_options: item.weaponType ? { ...profile.avatar_options, weapon: item.weaponType } : profile.avatar_options,
+        stats: {
+            str: profile.stats.str + (item.statBonus.str || 0),
+            int: profile.stats.int + (item.statBonus.int || 0),
+            def: profile.stats.def + (item.statBonus.def || 0),
+            spd: profile.stats.spd + (item.statBonus.spd || 0),
+        }
     };
-
-    setProfile(p => p ? { ...p, ...updatedProfilePayload } : null);
-
-    const { error } = await supabase.from('profiles').update(updatedProfilePayload).eq('id', profile.id);
+    setProfile(updatedProfile);
+    
+    const { error } = await supabase.from('profiles').update({ gold: updatedProfile.gold, inventory: updatedProfile.inventory, avatar_options: updatedProfile.avatar_options, stats: updatedProfile.stats }).eq('id', profile.id);
     if (error) {
         console.error("Failed to buy item", error);
-        // Revert on error
-        setProfile(profile);
+        setProfile(profile); // Revert on failure
     }
   };
 
   const handleUpgrade = async () => {
     if (!profile) return;
-    const { data, error } = await supabase
-      .from('profiles')
-      .update({ subscription_tier: 'pro', pro_features_unlocked_at: new Date().toISOString() })
-      .eq('id', profile.id)
-      .select().single();
+    const updates = {
+        subscription_tier: 'pro' as const,
+        pro_features_unlocked_at: new Date().toISOString(),
+    };
+    const originalProfile = profile;
+    setProfile(p => p ? ({ ...p, ...updates }) : null);
+    
+    const { error } = await supabase.from('profiles').update(updates).eq('id', profile.id);
     if (error) {
-      console.error("Failed to upgrade subscription", error);
-    } else if (data) {
-      setProfile(data as PlayerProfile);
-      setActiveView('dashboard');
+        console.error("Failed to upgrade subscription", error);
+        setProfile(originalProfile);
     }
   };
 
-  const renderUnauthenticatedOnline = () => {
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center bg-background"><p className="font-mono text-primary animate-pulse">Loading Your Adventure...</p></div>;
+  }
+  
+  if (!session) {
     switch (authView) {
       case 'login': return <LoginPage onNavigateToSignup={() => setAuthView('signup')} onNavigateToLanding={() => setAuthView('landing')} />;
       case 'signup': return <SignupPage onNavigateToLogin={() => setAuthView('login')} onNavigateToLanding={() => setAuthView('landing')} />;
-      case 'landing': default: return (
-        <LandingPage onSignupClick={() => setAuthView('signup')} onLoginClick={() => setAuthView('login')} />
-      );
+      default: return <LandingPage onSignupClick={() => setAuthView('signup')} onLoginClick={() => setAuthView('login')} />;
     }
-  };
+  }
 
-  const renderContent = () => {
-    if (loading) {
-        return <div className="w-screen h-screen flex items-center justify-center bg-background text-foreground font-mono">Loading your adventure...</div>;
-    }
-    
-    if (profile) {
-      const specializationChoices = SPECIALIZATIONS.filter(s => s.baseClass === profile.characterClass);
-      return (
-        <>
-          <Layout
-            playerProfile={profile}
-            onSignOut={handleSignOut}
-            onNavigateToBoard={() => setActiveView('board')}
-            onNavigateToDashboard={() => setActiveView('dashboard')}
-            onNavigateToAccount={() => setActiveView('account')}
-            onNavigateToDungeon={() => setActiveView('dungeon')}
-            onNavigateToSkills={() => setActiveView('skills')}
-            onNavigateToShop={() => setActiveView('shop')}
-            activeView={activeView}
-            dungeonAlert={monsters.length > 0}
-          >
-            {activeView === 'dashboard' && <Dashboard playerProfile={profile} habits={habits} onUpdateHabit={handleUpdateHabit} onAddNewHabits={handleAddNewHabits} onNavigateToAccount={() => setActiveView('account')} onNavigateToDungeon={() => setActiveView('dungeon')} monsters={monsters} onAddNewHabit={handleAddNewHabit} onDeleteHabit={handleDeleteHabit} onNavigateToSkills={() => setActiveView('skills')} />}
-            {activeView === 'board' && <BoardPage habits={habits} onUpdateHabit={handleUpdateHabit} />}
-            {activeView === 'account' && <AccountPage playerProfile={profile} onUpgrade={handleUpgrade} />}
-            {activeView === 'dungeon' && <DungeonPage monsters={monsters} habits={habits} onUpdateHabit={handleUpdateHabit} />}
-            {activeView === 'skills' && <SkillTreePage playerProfile={profile} onUnlockSkill={handleUnlockSkill} />}
-            {activeView === 'shop' && <ShopPage playerProfile={profile} onBuyItem={handleBuyItem} />}
-          </Layout>
-          {isLevelUpModalOpen && levelUpInfo && <LevelUpModal level={levelUpInfo.newLevel} onClose={() => setIsLevelUpModalOpen(false)} />}
-          {isSpecializationModalOpen && <SpecializationModal choices={specializationChoices} onSelect={handleSetSpecialization} />}
-        </>
-      );
-    }
-
-    if (needsProfile) {
-      const initialName = session?.user?.user_metadata?.display_name || '';
-      return <CharacterCreator isOpen={true} onClose={() => setNeedsProfile(false)} onCreateProfile={handleCreateProfile} initialName={initialName} />;
-    }
-    
-    return renderUnauthenticatedOnline();
-  };
+  if (needsProfile || !profile) {
+    return <CharacterCreator isOpen={true} onClose={() => {}} onCreateProfile={handleCreateProfile} initialName={session.user.email?.split('@')[0]} />;
+  }
 
   return (
-    <div className="bg-background min-h-screen text-foreground">
-      {renderContent()}
-    </div>
+    <Layout
+      playerProfile={profile}
+      onSignOut={() => supabase.auth.signOut()}
+      onNavigateToDashboard={() => setActiveView('dashboard')}
+      onNavigateToBoard={() => setActiveView('board')}
+      onNavigateToAccount={() => setActiveView('account')}
+      onNavigateToDungeon={() => setActiveView('dungeon')}
+      onNavigateToSkills={() => setActiveView('skills')}
+      onNavigateToShop={() => setActiveView('shop')}
+      activeView={activeView}
+      dungeonAlert={monsters.length > 0}
+    >
+      {activeView === 'dashboard' && (
+        <Dashboard
+          playerProfile={profile}
+          habits={habits}
+          monsters={monsters}
+          onUpdateHabit={handleUpdateHabit}
+          onAddNewHabits={handleAddNewHabits}
+          onAddNewHabit={handleAddNewHabit}
+          onDeleteHabit={handleDeleteHabit}
+          onNavigateToAccount={() => setActiveView('account')}
+          onNavigateToDungeon={() => setActiveView('dungeon')}
+          onNavigateToSkills={() => setActiveView('skills')}
+        />
+      )}
+      {activeView === 'board' && <BoardPage habits={habits} onUpdateHabit={handleUpdateHabit} />}
+      {activeView === 'account' && <AccountPage playerProfile={profile} onUpgrade={handleUpgrade} />}
+      {activeView === 'dungeon' && <DungeonPage monsters={monsters} habits={habits} onUpdateHabit={handleUpdateHabit} />}
+      {activeView === 'skills' && <SkillTreePage playerProfile={profile} onUnlockSkill={handleUnlockSkill} />}
+      {activeView === 'shop' && <ShopPage playerProfile={profile} onBuyItem={handleBuyItem} />}
+      
+      {isLevelUpModalOpen && levelUpInfo && (
+          <LevelUpModal level={levelUpInfo.newLevel} onClose={() => setIsLevelUpModalOpen(false)} />
+      )}
+      {isSpecializationModalOpen && profile.level >= 5 && !profile.specialization && (
+          <SpecializationModal 
+            choices={SPECIALIZATIONS.filter(s => s.baseClass === profile.characterClass)}
+            onSelect={handleSelectSpecialization}
+          />
+      )}
+    </Layout>
   );
 };
 
-const App: React.FC = () => {
-  return (
-    <ThemeProvider>
-      <ThemedApp />
-    </ThemeProvider>
-  )
-}
+
+const App: React.FC = () => (
+  <ThemeProvider>
+    <ThemedApp />
+  </ThemeProvider>
+);
 
 export default App;

@@ -41,8 +41,10 @@ export const generateHabitSuggestions = async (goal: string): Promise<Omit<Habit
 
     const jsonText = response.text.trim();
     const suggestions = JSON.parse(jsonText) as {text: string, difficulty: 'easy' | 'medium' | 'hard'}[];
+    
+    // Add the `type` property to each suggestion, defaulting to 'daily'
+    return suggestions.map(s => ({ ...s, type: 'daily' }));
 
-    return suggestions;
   } catch (error) {
     console.error("Error generating habit suggestions:", error);
     throw new Error("Failed to get suggestions from Vitamancer AI. Please try again.");

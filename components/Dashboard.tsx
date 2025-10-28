@@ -1,6 +1,7 @@
 
 
-import React from 'react';
+
+import React, { useState, useMemo } from 'react';
 import { PlayerProfile, Habit, Monster } from '../types';
 import HabitList from './dashboard/HabitList';
 import StatsPanel from './dashboard/StatsPanel';
@@ -9,6 +10,7 @@ import Calendar from './dashboard/Calendar';
 import Button from './PixelButton';
 import { Card, CardContent, CardHeader, CardTitle } from './Card';
 import AddHabitForm from './dashboard/AddHabitForm';
+import { cn } from '../lib/utils';
 
 interface DashboardProps {
   playerProfile: PlayerProfile;
@@ -22,6 +24,8 @@ interface DashboardProps {
   onNavigateToDungeon: () => void;
   onNavigateToSkills: () => void;
 }
+
+type HabitType = 'daily' | 'monthly' | 'yearly';
 
 const UpgradePrompt: React.FC<{onUpgradeClick: () => void}> = ({onUpgradeClick}) => (
     <Card className="bg-primary/10 border-primary/20">
@@ -41,19 +45,89 @@ const DungeonAlert: React.FC<{monsterCount: number, onEnterClick: () => void}> =
             <CardTitle className="text-2xl text-destructive">Monsters in the Dungeon!</CardTitle>
         </CardHeader>
         <CardContent>
-            <p className="text-muted-foreground mb-4">{monsterCount} of your failed quests from yesterday have turned into monsters. Defeat them to reclaim your honor (and get bonus loot)!</p>
+            <p className="text-muted-foreground mb-4">{monsterCount} of your failed daily quests from yesterday have turned into monsters. Defeat them to reclaim your honor (and get bonus loot)!</p>
             <Button onClick={onEnterClick} variant="destructive">Enter the Dungeon</Button>
         </CardContent>
     </Card>
-)
+);
+
+const HabitTypeTabs: React.FC<{ activeType: HabitType, setActiveType: (type: HabitType) => void }> = ({ activeType, setActiveType }) => {
+    const tabs: { id: HabitType; label: string }[] = [
+        { id: 'daily', label: 'Daily Quests' },
+        { id: 'monthly', label: 'Monthly Quests' },
+        { id: 'yearly', label: 'Yearly Goals' },
+    ];
+    return (
+        <div className="flex border-b-2 border-border mb-4">
+            {tabs.map(tab => (
+                <button
+                    key={tab.id}
+                    onClick={() => setActiveType(tab.id)}
+                    className={cn(
+                        'px-4 py-2 font-mono font-semibold text-sm -mb-0.5 border-b-2 transition-colors',
+                        activeType === tab.id
+                            ? 'border-primary text-primary'
+                            : 'border-transparent text-muted-foreground hover:text-foreground'
+                    )}
+                >
+                    {tab.label}
+                </button>
+            ))}
+        </div>
+    );
+};
+
 
 const Dashboard: React.FC<DashboardProps> = ({ playerProfile, habits, monsters, onUpdateHabit, onAddNewHabits, onAddNewHabit, onDeleteHabit, onNavigateToAccount, onNavigateToDungeon, onNavigateToSkills }) => {
+  const [activeHabitType, setActiveHabitType] = useState<HabitType>('daily');
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  const displayedHabits = useMemo(() => {
+    return habits.filter(h => {
+        if (h.type !== activeHabitType) return false;
+        
+        const habitDate = h.created_at ? new Date(h.created_at) : new Date();
+
+        switch(activeHabitType) {
+            case 'daily':
+                return habitDate.toDateString() === selectedDate.toDateString();
+            case 'monthly':
+                return habitDate.getMonth() === selectedDate.getMonth() && habitDate.getFullYear() === selectedDate.getFullYear();
+            case 'yearly':
+                return habitDate.getFullYear() === selectedDate.getFullYear();
+            default:
+                return false;
+        }
+    });
+  }, [habits, activeHabitType, selectedDate]);
+
+  const titleMap: Record<HabitType, string> = {
+      daily: `Quests for ${selectedDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}`,
+      monthly: `Quests for ${selectedDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}`,
+      yearly: `Goals for ${selectedDate.getFullYear()}`,
+  };
+
   return (
     <main className="container mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
       <div className="lg:col-span-8 space-y-6">
         {monsters.length > 0 && <DungeonAlert monsterCount={monsters.length} onEnterClick={onNavigateToDungeon} />}
-        <HabitList habits={habits} onUpdateHabit={onUpdateHabit} onDeleteHabit={onDeleteHabit} />
+        
+        <Card>
+            <CardHeader>
+                <HabitTypeTabs activeType={activeHabitType} setActiveType={setActiveHabitType} />
+            </CardHeader>
+            <CardContent>
+                <HabitList
+                    title={titleMap[activeHabitType]}
+                    habits={displayedHabits}
+                    onUpdateHabit={onUpdateHabit}
+                    onDeleteHabit={onDeleteHabit}
+                />
+            </CardContent>
+        </Card>
+        
         <AddHabitForm onAddHabit={onAddNewHabit} />
+        
         {playerProfile.subscription_tier === 'pro' ? (
             <HabitGenerator onAddHabits={onAddNewHabits} />
         ) : (
@@ -62,7 +136,7 @@ const Dashboard: React.FC<DashboardProps> = ({ playerProfile, habits, monsters, 
       </div>
       <aside className="lg:col-span-4 space-y-6">
         <StatsPanel playerProfile={playerProfile} onNavigateToSkills={onNavigateToSkills} />
-        <Calendar habits={habits} />
+        <Calendar habits={habits} selectedDate={selectedDate} onDateSelect={setSelectedDate} />
       </aside>
     </main>
   );

@@ -86,7 +86,7 @@ const HabitRow: React.FC<HabitRowProps> = React.memo(({ habit, onUpdate, onDelet
                     <span className={`transition-colors ${habit.status === 'completed' ? 'line-through text-muted-foreground' : ''}`}>{habit.text}</span>
                 </div>
                 <div className="flex items-center gap-0.5">
-                    {habit.status !== 'completed' && (
+                    {habit.status !== 'completed' && habit.type === 'daily' && (
                         <div className="text-right text-sm flex-shrink-0 mr-2">
                             <span className="font-bold text-green-400">+{xpAmount[habit.difficulty]} XP</span>
                         </div>
@@ -130,11 +130,12 @@ const HabitRow: React.FC<HabitRowProps> = React.memo(({ habit, onUpdate, onDelet
 
 interface HabitListProps {
   habits: Habit[];
+  title: string;
   onUpdateHabit: (id: string, updates: Partial<Habit>) => void;
   onDeleteHabit: (id: string) => void;
 }
 
-const HabitList: React.FC<HabitListProps> = ({ habits, onUpdateHabit, onDeleteHabit }) => {
+const HabitList: React.FC<HabitListProps> = ({ habits, title, onUpdateHabit, onDeleteHabit }) => {
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
 
   const handleSaveEdit = (updates: Partial<Habit>) => {
@@ -145,22 +146,22 @@ const HabitList: React.FC<HabitListProps> = ({ habits, onUpdateHabit, onDeleteHa
 
   return (
     <>
-      <Card className="bg-card/80 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl">Daily Quests</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
+      <div className="bg-card/80 backdrop-blur-sm">
+        <div className="px-6 pb-6">
+           <h2 className="text-2xl font-semibold leading-none tracking-tight font-mono mb-4">{title}</h2>
+          <div className="space-y-3 min-h-[10rem]">
             {habits.length > 0 ? (
               habits.map(habit => (
                 <HabitRow key={habit.id} habit={habit} onUpdate={onUpdateHabit} onDelete={onDeleteHabit} onEdit={setEditingHabit} />
               ))
             ) : (
-              <p className="text-muted-foreground py-4 text-center">No habits yet. Add a new quest or use the AI generator to create some!</p>
+              <div className="flex items-center justify-center h-full pt-10">
+                <p className="text-muted-foreground text-center">No quests found. Add a new quest below!</p>
+              </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
       {editingHabit && (
           <EditHabitModal
               habit={editingHabit}

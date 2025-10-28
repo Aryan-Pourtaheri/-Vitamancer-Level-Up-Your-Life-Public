@@ -63,6 +63,7 @@ export interface Habit {
   status: 'not_started' | 'in_progress' | 'completed';
   notes?: string | null;
   created_at?: string;
+  type: 'daily' | 'monthly' | 'yearly';
 }
 
 export interface Monster {
