@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import Button from './PixelButton';
 import { Modal, ModalContent, ModalHeader, ModalTitle } from './Modal';
@@ -88,6 +89,21 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ isOpen, onClose, on
         setAvatarOptions(selectedClass.avatar);
         setStats(selectedClass.baseStats);
     }, [selectedClass]);
+
+    useEffect(() => {
+      const originalTitle = 'Vitamancer — Level Up Your Life';
+      if (isOpen) {
+        if (name.trim()) {
+          document.title = `${name.trim()} | Vitamancer`;
+        } else {
+          document.title = 'Forge Your Hero | Vitamancer';
+        }
+      }
+  
+      return () => {
+        document.title = originalTitle;
+      };
+    }, [name, isOpen]);
 
     const pointsUsed = useMemo(() => STAT_NAMES.reduce((sum, key) => sum + stats[key], 0), [stats]);
     const pointsRemaining = MAX_STAT_POINTS - pointsUsed;

@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
@@ -7,7 +8,7 @@ import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
 import BoardPage from './components/BoardPage';
 import { PlayerProfile, Habit, AvatarOptions, Stats, Monster, Specialization, Skill, Item } from './types';
-import { xpForLevel, createInitialPlayerProfile, SPECIALIZATIONS } from './constants';
+import { xpForLevel, createInitialPlayerProfile, SPECIALIZATIONS, SKILL_TREES } from './constants';
 import LevelUpModal from './components/LevelUpModal';
 import CharacterCreator from './components/CharacterCreator';
 import { ThemeProvider } from './components/ThemeProvider';
@@ -66,8 +67,31 @@ const ThemedApp: React.FC = () => {
       .single();
 
     if (profileData) {
-        profileData.avatar_options = { hat: false, weapon: 'none', cloak: false, ...profileData.avatar_options };
-        const fetchedProfile = profileData as PlayerProfile;
+        // Ensure complex types have default values to prevent runtime errors
+        const inventory = profileData.inventory || [];
+        const skills = profileData.skills || [];
+        const avatar_options = { hat: false, weapon: 'none', cloak: false, ...profileData.avatar_options };
+        
+        // DERIVE skill_points since it's not in the DB
+        const totalPointsFromLevels = profileData.level > 0 ? profileData.level - 1 : 0;
+        
+        let spentPoints = 0;
+        if (profileData.specialization && skills.length > 0) {
+            const allSkills = Object.values(SKILL_TREES).flat();
+            const unlockedSkills = skills
+                .map(skillId => allSkills.find(s => s.id === skillId))
+                .filter((s): s is Skill => s !== undefined);
+            spentPoints = unlockedSkills.reduce((sum, skill) => sum + skill.cost, 0);
+        }
+        
+        const fetchedProfile: PlayerProfile = {
+            ...(profileData as Omit<PlayerProfile, 'skill_points'>),
+            inventory,
+            skills,
+            avatar_options,
+            skill_points: totalPointsFromLevels - spentPoints
+        };
+        
         setProfile(fetchedProfile);
         
         const { data: habitsData, error: habitsError } = await supabase.from('habits').select('*').eq('user_id', user.id);
@@ -220,7 +244,9 @@ const ThemedApp: React.FC = () => {
       }
     }
 
-    const { error } = await supabase.from('profiles').update(updatedProfilePayload).eq('id', profile.id);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { skill_points, ...dbPayload } = updatedProfilePayload;
+    const { error } = await supabase.from('profiles').update(dbPayload).eq('id', profile.id);
     if (error) console.error("Failed to update profile XP", error);
   }, [profile]);
   
@@ -337,12 +363,17 @@ const ThemedApp: React.FC = () => {
 
   const handleCreateProfile = async (name: string, characterClass: string, avatarOptions: AvatarOptions, stats: Stats) => {
     if (!session?.user) return;
-    const newProfile = createInitialPlayerProfile(session.user.id, characterClass, name, avatarOptions, stats);
-    const { data, error } = await supabase.from('profiles').insert(newProfile).select().single();
+    
+    const dbPayload = createInitialPlayerProfile(session.user.id, characterClass, name, avatarOptions, stats);
+
+    const { data, error } = await supabase.from('profiles').insert(dbPayload).select().single();
+    
     if (error) {
       console.error("Failed to create profile", error);
     } else if (data) {
-      setProfile(data as PlayerProfile);
+      // The DB returns a profile without skill_points. We add it for the client state.
+      const clientProfile: PlayerProfile = { ...data, skill_points: 0 };
+      setProfile(clientProfile);
       setNeedsProfile(false);
     }
   };
@@ -396,7 +427,9 @@ const ThemedApp: React.FC = () => {
 
     setProfile(p => p ? { ...p, ...updatedProfilePayload } : null);
 
-    const { error } = await supabase.from('profiles').update(updatedProfilePayload).eq('id', profile.id);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { skill_points, ...dbPayload } = updatedProfilePayload;
+    const { error } = await supabase.from('profiles').update(dbPayload).eq('id', profile.id);
     if (error) {
         console.error("Failed to unlock skill", error);
         // Revert on error

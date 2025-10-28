@@ -4,7 +4,7 @@ import { PlayerProfile, CharacterClass, AvatarOptions, Stats, Specialization, Sk
 
 export const xpForLevel = (lvl: number): number => Math.floor(100 * Math.pow(lvl, 1.5));
 
-export const createInitialPlayerProfile = (userId: string, characterClass: string, name: string, avatarOptions: AvatarOptions, stats: Stats): Omit<PlayerProfile, 'created_at' | 'pro_features_unlocked_at' | 'last_monster_generation_at'> => {
+export const createInitialPlayerProfile = (userId: string, characterClass: string, name: string, avatarOptions: AvatarOptions, stats: Stats): Omit<PlayerProfile, 'skill_points' | 'created_at' | 'pro_features_unlocked_at' | 'last_monster_generation_at'> => {
   return {
     id: userId,
     name: name,
@@ -21,7 +21,6 @@ export const createInitialPlayerProfile = (userId: string, characterClass: strin
     inventory: [],
     subscription_tier: 'free',
     specialization: null,
-    skill_points: 0,
     skills: [],
   };
 };

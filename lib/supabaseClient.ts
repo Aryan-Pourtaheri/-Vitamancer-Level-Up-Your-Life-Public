@@ -1,5 +1,6 @@
 
 
+
 import { createClient, Session, User } from '@supabase/supabase-js';
 // FIX: Using `import type` for Row types, as Insert/Update types are now inlined.
 import type { PlayerProfile, Habit, Monster, Item, WeaponType } from '../types';
@@ -152,9 +153,9 @@ export interface Database {
   public: {
     Tables: {
       profiles: {
-        Row: PlayerProfile;
-        Insert: Omit<PlayerProfile, 'created_at' | 'pro_features_unlocked_at' | 'last_monster_generation_at'>;
-        Update: Partial<PlayerProfile>;
+        Row: Omit<PlayerProfile, 'skill_points'>;
+        Insert: Omit<PlayerProfile, 'skill_points' | 'created_at' | 'pro_features_unlocked_at' | 'last_monster_generation_at'>;
+        Update: Partial<Omit<PlayerProfile, 'skill_points'>>;
       };
       habits: {
         Row: Habit;

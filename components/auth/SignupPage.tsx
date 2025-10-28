@@ -25,7 +25,6 @@ interface SignupPageProps {
 
 const SignupPage: React.FC<SignupPageProps> = ({ onNavigateToLogin, onNavigateToLanding }) => {
   const [loading, setLoading] = useState(false);
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -41,11 +40,6 @@ const SignupPage: React.FC<SignupPageProps> = ({ onNavigateToLogin, onNavigateTo
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
-        options: {
-            data: {
-                display_name: name,
-            }
-        }
       });
       if (error) throw error;
       
@@ -62,7 +56,6 @@ const SignupPage: React.FC<SignupPageProps> = ({ onNavigateToLogin, onNavigateTo
         }
         setEmail('');
         setPassword('');
-        setName('');
       }
 
     } catch (err: any) {
@@ -110,14 +103,6 @@ const SignupPage: React.FC<SignupPageProps> = ({ onNavigateToLogin, onNavigateTo
         <form onSubmit={handleSignup} className="space-y-4">
           <div className="space-y-2">
             <Input
-              type="text"
-              placeholder="Hero's Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={loading}
-              required
-            />
-            <Input
               type="email"
               placeholder="Email"
               value={email}
@@ -137,7 +122,7 @@ const SignupPage: React.FC<SignupPageProps> = ({ onNavigateToLogin, onNavigateTo
           {message && <p className="text-sm text-center text-green-400">{message}</p>}
           {error && <p className="text-sm text-center text-destructive">{error}</p>}
 
-          <Button type="submit" className="w-full" disabled={loading || !email || !password || !name}>
+          <Button type="submit" className="w-full" disabled={loading || !email || !password}>
             {loading ? 'Creating Account...' : 'Sign Up'}
           </Button>
         </form>
